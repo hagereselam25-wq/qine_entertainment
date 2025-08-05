@@ -1,0 +1,44 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+
+<h2>{{ media.title }}</h2>
+<p>{{ media.description }}</p>
+
+<!-- Media Section -->
+{% if media.youtube_url %}
+  <!-- Embedded YouTube video -->
+  <iframe width="560" height="315" src="{{ media.youtube_url|replace:'watch?v=','embed/' }}" 
+    frameborder="0" allowfullscreen></iframe>
+{% elif media.video_file %}
+  <!-- Local video streaming -->
+  <video width="640" height="360" controls>
+    <source src="{{ media.video_file.url }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+{% else %}
+  <p>No media source available.</p>
+{% endif %}
+
+<p style="opacity: 0.5; font-size: small;">Watermark: CINEMA RESERVATION STREAM</p>
+
+<hr>
+
+<!-- Rating Section -->
+<div style="margin-top: 20px;">
+  <h4>Rate This Video</h4>
+  <p><strong>Average Rating:</strong> {{ average_rating|floatformat:1 }} / 5</p>
+
+  {% if user_rating %}
+    <p><strong>Your Rating:</strong> {{ user_rating }} / 5</p>
+  {% else %}
+    <p><em>You haven’t rated this media yet.</em></p>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.rating.label_tag }} {{ form.rating }}
+    <button type="submit" class="btn btn-primary mt-2">Submit Rating</button>
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cinema Ticket Reservation</title>
+
+  <!-- Fonts and Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+  <header>
+    <h1>Cinema Ticket Reservation</h1>
+    <a href="{% url 'admin_login' %}" class="admin-login-link">Admin Login</a>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+      <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+    <div class="auth-links">
+      {% if user.is_authenticated %}
+        <span>Welcome, {{ user.username }}</span>
+        <a href="{% url 'logout' %}">Logout</a>
+      {% else %}
+        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'signup' %}">Sign Up</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <form method="GET" action="{% url 'home' %}">
+      <input type="text" name="q" placeholder="Search movies..." value="{{ query|default:'' }}">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+
+  <!-- 🎞 Carousel -->
+  {% if featured_movies %}
+  <div class="carousel">
+    <div class="carousel-track" id="carouselTrack">
+      {% for movie in featured_movies %}
+        <div class="carousel-slide">
+          <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
+        </div>
+      {% endfor %}
+    </div>
+    <div class="carousel-controls">
+      <button onclick="prevSlide()">‹</button>
+      <button onclick="nextSlide()">›</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 🎟 Booking Section -->
+  <section class="section-panel booking-panel">
+    <h2 class="section-title">🎟 Book a Movie Ticket</h2>
+    <div class="movie-grid">
+      {% for movie in movies %}
+        {% if not movie.is_streaming %}
+          <div class="movie-card">
+           {% if movie.poster %}
+  <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
+{% else %}
+  <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
+{% endif %}
+
+            <div class="content">
+              <h3>{{ movie.title }}</h3>
+              <div class="stars">
+                {% for i in '12345' %}
+                  {% if forloop.counter <= movie.rating %}
+                    <i class="fas fa-star"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              <a class="book-btn" href="{% url 'seat_selection' movie.id %}">Book Now</a>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- 📺 Streaming Section -->
+  <section class="section-panel streaming-panel">
+    <h2 class="section-title">📺 Watch Online (Streaming)</h2>
+    <div class="movie-grid">
+      {% for movie in movies %}
+        {% if movie.is_streaming %}
+          <div class="movie-card">
+            {% if movie.poster %}
+  <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
+{% else %}
+  <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
+{% endif %}
+
+            <div class="content">
+              <h3>{{ movie.title }}</h3>
+              <div class="stars">
+                {% for i in '12345' %}
+                  {% if forloop.counter <= movie.rating %}
+                    <i class="fas fa-star"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% if user.is_authenticated %}
+                <a class="book-btn" href="{{ movie.stream_url }}">Stream</a>
+              {% else %}
+                <a class="book-btn" href="{% url 'login' %}">Login to Stream</a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- JS -->
+  <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+</html>

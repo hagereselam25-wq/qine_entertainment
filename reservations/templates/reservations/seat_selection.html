@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seat Selection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+
+        .form-container {
+            background: #ffffff;
+            padding: 25px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: inline-block;
+            max-width: 500px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .form-container h2 {
+            color: #2c3e50;
+        }
+
+        .form-container label {
+            font-size: 16px;
+            color: #555;
+            margin: 8px 0;
+        }
+
+        .form-container input, .form-container select, .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .form-container button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #2980b9;
+        }
+
+        .seats-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .seat {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            background-color: #f39c12;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .seat.booked {
+            background-color: #e74c3c;
+            cursor: not-allowed;
+        }
+
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 20px;
+            text-align: center;
+            padding-top: 200px;
+        }
+
+        .popup .popup-content {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .popup button {
+            padding: 10px 20px;
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .popup button:hover {
+            background-color: #d35400;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Seat Selection for {{ movie.title }}</h1>
+
+    <div class="form-container">
+        <form method="POST">
+            {% csrf_token %}
+            <label for="name">Your Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="email">Your Email:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="seat_id">Select Seat:</label>
+            <select name="seat_id" id="seat_id" required>
+                {% for seat in seats %}
+                    <option value="{{ seat.id }}" {% if seat.is_booked %}disabled{% endif %}>
+                        Seat {{ seat.seat_number }} {% if seat.is_booked %}- Booked{% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit">Confirm Reservation</button>
+        </form>
+
+        {% if error %}
+            <div class="error-message">{{ error }}</div>
+        {% endif %}
+    </div>
+
+    <div class="seats-container">
+        {% for seat in seats %}
+            <div class="seat {% if seat.is_booked %}booked{% endif %}" data-seat-id="{{ seat.id }}" onclick="selectSeat({{ seat.id }}, {{ seat.is_booked|yesno:'true,false' }})">
+                {% if not seat.is_booked %}
+                    <span>Seat {{ seat.seat_number }}</span>
+                {% else %}
+                    <span>Booked</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Popup for booked seat -->
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <p>Sorry, this seat is already booked. Please select another available seat.</p>
+            <button onclick="closePopup()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function selectSeat(seatId, isBooked) {
+            if (isBooked) {
+                showPopup();
+            } else {
+                // You can submit the form here if seat is available
+                document.getElementById('seat_id').value = seatId;
+            }
+        }
+
+        function showPopup() {
+            document.getElementById('popup').style.display = 'block';
+        }
+
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

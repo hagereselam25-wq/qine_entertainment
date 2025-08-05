@@ -1,0 +1,48 @@
+# Python bytecode
+*.pyc
+pycache/
+*.egg-info/
+*.so
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Database
+*.sqlite3
+
+# Environment variables
+.env
+.flaskenv
+
+# Media and static files (if managed separately or collected during deployment)
+media/
+static/
+
+# IDE and editor specific files
+.idea/
+.vscode/
+*.swp
+*.bak
+*.swo
+
+# Log files
+*.log
+
+# Testing and coverage reports
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Django specific
+# Migrations cache (but keep migration files themselves)
+migrations/**/pycache/
+
+# Compiled assets (if using a frontend build process)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

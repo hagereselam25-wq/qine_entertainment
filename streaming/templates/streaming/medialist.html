@@ -1,0 +1,16 @@
+{% extends "admin_dashboard.html" %}
+{% block content %}
+
+<h2>Available Media</h2>
+
+<ul>
+  {% for media in media_list %}
+    <li>
+      <a href="{% url 'streaming:media_detail' media.pk %}">{{ media.title }}</a>
+      <br>
+      <small>Uploaded by {{ media.uploaded_by.username }} on {{ media.uploaded_at }}</small>
+    </li>
+  {% endfor %}
+</ul>
+
+{% endblock %}

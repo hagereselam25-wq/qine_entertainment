@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Movies</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 30px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 40px;
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+
+        li:hover {
+            background: #3498db;
+        }
+
+        a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        a:hover {
+            color: #f1c40f;
+        }
+
+        img {
+            max-width: 200px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        iframe, video {
+            max-width: 100%;
+            height: 240px;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Now Showing</h1>
+    <ul>
+      {% for movie in movies %}
+    <li>
+        <h3>{{ movie.title }} - {{ movie.show_time }}</h3>
+
+        {% if movie.poster %}
+            <img src="{{ movie.poster.url }}" alt="{{ movie.title }} poster" width="200" />
+        {% endif %}
+
+        {% if movie.trailer %}
+            <video width="320" height="240" controls>
+                <source src="{{ movie.trailer.url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        {% endif %}
+
+        <br>
+        <a href="{% url 'seat_selection' movie.id %}">Book Seats</a>
+    </li>
+{% endfor %}
+
+    </ul>
+</body>
+</html>
