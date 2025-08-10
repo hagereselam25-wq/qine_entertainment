@@ -1,6 +1,11 @@
 from pathlib import Path
 import os
 
+CHAPA_SECRET_KEY = 'CHASECK_TEST-LVVM7kiTEAfpgTT9ULzRH4qm4dtac79i'
+CHAPA_BASE_URL = 'https://api.chapa.co/v1/transaction/initialize'
+CHAPA_VERIFY_URL = 'https://api.chapa.co/v1/transaction/verify/'
+
+
 # Define BASE_DIR before using it
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -106,6 +111,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = 'hagereselam25@gmail.com'         
-EMAIL_HOST_PASSWORD = 'zdcurgoccldphprg'  # 
-
+EMAIL_HOST_PASSWORD = 'zdcurgoccldphprg'  
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

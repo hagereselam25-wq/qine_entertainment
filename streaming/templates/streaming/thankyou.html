@@ -1,0 +1,15 @@
+{% if subscription %}
+  <h2>✅ Thank You for Subscribing!</h2>
+  <p><strong>Name:</strong> {{ subscription.full_name }}</p>
+  <p><strong>Email:</strong> {{ subscription.email }}</p>
+  <p><strong>Type:</strong> {{ subscription.subscription_type|capfirst }}</p>
+  <p><strong>Status:</strong> {{ subscription.is_paid|yesno:"Paid,Unpaid" }}</p>
+  {% if subscription.qr_code %}
+    <img src="{{ subscription.qr_code.url }}" alt="QR Code" width="200">
+    <a href="{{ subscription.qr_code.url }}" download>Download Ticket</a>
+      <p><a href="{% url 'home' %}">Home</a></p>
+
+    {% endif %}
+{% else %}
+  <h2>Subscription not found.</h2>
+{% endif %}

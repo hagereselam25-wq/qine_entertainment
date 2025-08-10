@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Seat Selection</title>
     <style>
+        /* Your existing styles remain unchanged */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 30px;
@@ -136,8 +137,12 @@
                     </option>
                 {% endfor %}
             </select>
-            
-            <button type="submit">Confirm Reservation</button>
+
+            <!-- New payment amount input -->
+            <label for="amount">Payment Amount (ETB):</label>
+            <input type="number" id="amount" name="amount" min="1" step="0.01" placeholder="Enter payment amount" required>
+
+            <button type="submit">Confirm Reservation & Pay</button>
         </form>
 
         {% if error %}
@@ -170,7 +175,7 @@
             if (isBooked) {
                 showPopup();
             } else {
-                // You can submit the form here if seat is available
+                // Update the select dropdown with clicked seat
                 document.getElementById('seat_id').value = seatId;
             }
         }

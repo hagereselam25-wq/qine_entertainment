@@ -8,14 +8,13 @@ urlpatterns = [
     path('ticket/<int:ticket_id>/', views.ticket_confirmation, name='ticket_confirmation'),
     path('payment/success/', views.payment_success, name='payment_success'),
     path('payment/cancel/', views.payment_cancel, name='payment_cancel'),
+    path('payment/verify/', views.payment_verify, name='payment_verify'),
 
     # Admin URLs
     path('admin/login/', views.admin_login, name='admin_login'),
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin/logout/', views.admin_logout, name='admin_logout'),
 
-    # User Auth URLs
-    path('login/', views.user_login, name='login'),
-    path('signup/', views.user_signup, name='signup'),
-    path('logout/', views.user_logout, name='logout'),
+
+    # Streaming subscription payment URLs
 ]

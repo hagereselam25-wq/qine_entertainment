@@ -1,16 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Success</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <div class="container">
-        <h1>Payment Successful!</h1>
-        <p>Your payment has been successfully processed. Enjoy your movie!</p>
-        <a href="{% url 'home' %}" class="btn">Return to Home</a>
-    </div>
-</body>
-</html>
+<h2>Payment Successful!</h2>
+<p>Thank you, {{ reservation.user }}. Your seat {{ reservation.seat.seat_number }} is confirmed.</p>
+
+{% if qr_url %}
+    <img src="{{ qr_url }}" alt="Your Ticket QR Code" style="max-width:300px;"/>
+    <p>
+      <a href="{{ qr_url }}" download="ticket_qr_{{ reservation.id }}.png">⬇️ Download QR Code</a>
+    </p>
+{% else %}
+    <p>QR code is not available.</p>
+{% endif %}
+
+<p><a href="{% url 'home' %}">← Return to Home</a></p>
