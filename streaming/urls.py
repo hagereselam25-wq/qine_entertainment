@@ -14,6 +14,7 @@ urlpatterns = [
     path('subscribe/', views.create_subscription, name='create_subscription'),
     path('verify/', views.verify_subscription_payment, name='verify_subscription_payment'),
     path('thankyou/', views.subscription_thankyou, name='subscription_thankyou'),
+    path('', views.streaming_home, name='streaming_home'),
 
     # Auth
     path('signup/', views.user_signup, name='signup'),

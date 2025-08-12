@@ -300,3 +300,11 @@ def profile(request):
     return render(request, 'streaming/profile.html', {
         'subscription': subscription
     })
+
+from django.shortcuts import render
+from .models import StreamingContent
+
+def streaming_home(request):
+    contents = StreamingContent.objects.all().order_by('-release_date')
+    return render(request, 'streaming/streaming_home.html', {'contents': contents})
+

@@ -1,12 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django_countries.fields import CountryField  # For region tracking
 
 SUBSCRIPTION_CHOICES = (
     ('monthly', 'Monthly'),
     ('annual', 'Annual'),
 )
-
 
 class Transaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -21,13 +21,14 @@ class Transaction(models.Model):
     def __str__(self):
         return f"Transaction {self.tx_ref} - {self.status}"
 
+
 class StreamingSubscription(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)  # or ForeignKey if multiple subs per user
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     full_name = models.CharField(max_length=100)
     email = models.EmailField()
     subscription_type = models.CharField(max_length=10, choices=SUBSCRIPTION_CHOICES)
     chapa_tx_ref = models.CharField(max_length=100, unique=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # <--- Make sure this exists
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_paid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     access_expires_at = models.DateTimeField(null=True, blank=True)
@@ -53,13 +54,25 @@ class StreamingContent(models.Model):
     description = models.TextField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='movie')
     thumbnail = models.ImageField(upload_to='thumbnails/')
-    video_url = models.URLField(help_text="Paste the direct video URL or embed link")
+    video_file = models.FileField(upload_to='secure_videos/', blank=True, null=True,
+                                  help_text="Upload video securely")
+    video_url = models.URLField(blank=True, null=True, help_text="Optional external video URL")
+    price_per_view = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
     duration_minutes = models.PositiveIntegerField(help_text="Total duration in minutes")
     release_date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Analytics
+    total_plays = models.PositiveIntegerField(default=0)
+    unique_viewers = models.PositiveIntegerField(default=0)
+    total_watch_time_minutes = models.PositiveIntegerField(default=0)  # Total watch time in minutes
+    completion_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)  # % value
+
     def __str__(self):
         return self.title
+
+    def average_watch_time(self):
+        return (self.total_watch_time_minutes / self.total_plays) if self.total_plays else 0
 
 
 class StreamViewLog(models.Model):
@@ -67,6 +80,11 @@ class StreamViewLog(models.Model):
     content = models.ForeignKey(StreamingContent, on_delete=models.CASCADE)
     views = models.IntegerField(default=0)
     last_viewed = models.DateTimeField(auto_now=True)
+    watch_time_minutes = models.PositiveIntegerField(default=0)
+    country = CountryField(blank=True, null=True)  # Track user region
 
     def __str__(self):
         return f"{self.user.username} - {self.content.title}"
+
+    class Meta:
+        unique_together = ('user', 'content')  # One log per user per content

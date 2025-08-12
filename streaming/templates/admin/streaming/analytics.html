@@ -1,0 +1,17 @@
+{% extends "admin/change_list.html" %}
+{% block content %}
+<h1>📊 Streaming Analytics</h1>
+
+<table class="table">
+    <tr><th>Total Plays</th><td>{{ stats.total_views }}</td></tr>
+    <tr><th>Unique Viewers</th><td>{{ stats.unique_viewers }}</td></tr>
+    <tr><th>Total Watch Time</th><td>{{ stats.total_watch_time_hours|floatformat:2 }} hours</td></tr>
+    <tr><th>Avg Watch Time / View</th><td>{{ stats.avg_watch_time_per_view|floatformat:2 }} hrs</td></tr>
+    <tr><th>Completion Rate</th><td>{{ stats.completion_rate }}%</td></tr>
+    <tr><th>Top Regions</th><td>
+        {% for country, percent in stats.top_regions.items %}
+            {{ country }} ({{ percent }}%)<br>
+        {% endfor %}
+    </td></tr>
+</table>
+{% endblock %}
