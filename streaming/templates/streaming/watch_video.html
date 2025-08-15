@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ content.title }}</h2>
+<p>Category: {{ content.get_category_display }}</p>
+<p>Duration: {{ content.duration_minutes }} minutes</p>
+
+{% if video_url %}
+  <video
+    id="video-player"
+    width="800"
+    height="450"
+    controls
+    controlsList="nodownload noplaybackrate"
+    oncontextmenu="return false;"
+    preload="metadata"
+    playsinline
+  >
+    {% if not is_hls %}
+      <source src="{{ video_url }}" type="video/mp4">
+    {% endif %}
+    Your browser does not support the video tag.
+  </video>
+
+  {% if is_hls %}
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  {% endif %}
+
+  <script>
+    (function() {
+      const video = document.getElementById('video-player');
+      const videoSrc = "{{ video_url }}";
+      const reportUrl = "{% url 'streaming:report_watch_time' content.id %}";
+      const csrfToken = "{{ csrf_token }}";
+
+      {% if is_hls %}
+      // --- HLS setup ---
+      if (Hls.isSupported()) {
+        const hls = new Hls({ enableWorker: true });
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoSrc;
+      }
+      {% endif %}
+
+      // --- Watch-time tracking ---
+      let isPlaying = false;
+      let lastTime = 0;
+      let accumulatedSeconds = 0;
+      let startedSent = false;
+
+      function postData(minutes, final=false, event="progress") {
+        const formData = new FormData();
+        formData.append("csrfmiddlewaretoken", csrfToken);
+        formData.append("content_id", "{{ content.id }}");
+        formData.append("watch_time", minutes.toFixed(2)); // send fractional minutes
+        formData.append("event", event);
+
+        if (final && navigator.sendBeacon) {
+          const params = new URLSearchParams();
+          for (const [k, v] of formData) params.append(k, v);
+          const blob = new Blob([params], { type: 'application/x-www-form-urlencoded' });
+          navigator.sendBeacon(reportUrl, blob);
+          return;
+        }
+
+        fetch(reportUrl, { method: "POST", body: formData }).catch(() => {});
+      }
+
+      function flush(final=false, event="progress") {
+        const minutes = accumulatedSeconds / 60;
+        if (minutes > 0) {
+          postData(minutes, final, event);
+          accumulatedSeconds = 0;
+        }
+      }
+
+      function sendStartIfNeeded() {
+        if (!startedSent) {
+          startedSent = true;
+          postData(0, false, "start");
+        }
+      }
+
+      video.addEventListener("play", () => { 
+        isPlaying = true; 
+        sendStartIfNeeded(); 
+        lastTime = video.currentTime; // reset reference
+      });
+
+      video.addEventListener("pause", () => { 
+        isPlaying = false; 
+        flush(); 
+      });
+
+      video.addEventListener("timeupdate", () => {
+        if (!isPlaying) return;
+        const now = video.currentTime;
+        const delta = now - lastTime;
+        if (delta > 0 && delta < 5) { // filter big jumps
+          accumulatedSeconds += delta;
+        }
+        lastTime = now;
+      });
+
+      video.addEventListener("ended", () => {
+        isPlaying = false;
+        flush(true, "ended"); // final flush with ended event
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) flush();
+      });
+
+      window.addEventListener("beforeunload", () => flush(true));
+
+      // Report progress every 10 seconds
+      setInterval(() => flush(), 10000);
+    })();
+  </script>
+{% else %}
+  <p>No video available.</p>
+{% endif %}
+{% endblock %}

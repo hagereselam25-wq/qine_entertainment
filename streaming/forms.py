@@ -22,3 +22,12 @@ class CustomUserSignupForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError("Email address already in use.")
         return email
+
+from django import forms
+from .models import UserProfile
+
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_picture', 'bio']
+

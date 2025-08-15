@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django_countries.fields import CountryField  # For region tracking
+from django_countries.fields import CountryField
+import os
 
 SUBSCRIPTION_CHOICES = (
     ('monthly', 'Monthly'),
@@ -88,3 +89,29 @@ class StreamViewLog(models.Model):
 
     class Meta:
         unique_together = ('user', 'content')  # One log per user per content
+
+def profile_image_path(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f"profile_{instance.user.id}.{ext}"
+    return os.path.join('profile_pics', filename)
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(
+        upload_to=profile_image_path,
+        default='profile_pics/default_profile.png'
+    )
+    bio = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username
+
+
+class WatchHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    video_title = models.CharField(max_length=255)
+    watch_date = models.DateTimeField(default=timezone.now)
+    duration_watched = models.PositiveIntegerField(default=0)  # in minutes
+
+    def __str__(self):
+        return f"{self.user.username} - {self.video_title}"

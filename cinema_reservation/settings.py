@@ -1,5 +1,12 @@
 from pathlib import Path
 import os
+import secrets
+
+# Generate once, then keep it the same (don’t regenerate every restart)
+SIGNED_URL_SECRET = "b8c3af5f9e0f44f4bda3d298f5c0f3d7f83f2e9f4b6d4a0a9b17f3cd8c8f7a23"
+# You can generate your own with:
+# secrets.token_hex(32)
+
 
 CHAPA_SECRET_KEY = 'CHASECK_TEST-LVVM7kiTEAfpgTT9ULzRH4qm4dtac79i'
 CHAPA_BASE_URL = 'https://api.chapa.co/v1/transaction/initialize'
@@ -43,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -93,6 +101,26 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
+LANGUAGE_CODE = 'en'  # Default language
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('am', 'Amharic'),
+    ('ti', 'Tigrigna'),
+    ('om', 'Oromiffa'),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+
+
+# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -113,5 +141,3 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'hagereselam25@gmail.com'         
 EMAIL_HOST_PASSWORD = 'zdcurgoccldphprg'  
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

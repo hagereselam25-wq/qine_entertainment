@@ -75,10 +75,8 @@
           <p>Category: {{ content.get_category_display }}</p>
           <p>Release Date: {{ content.release_date }}</p>
           <p>Duration: {{ content.duration_minutes }} minutes</p>
-         {% if content.video_file %}
-    <a href="{{ content.video_file.url }}" target="_blank">Watch Now</a>
-{% elif content.video_url %}
-    <a href="{{ content.video_url }}" target="_blank">Watch Now</a>
+     {% if content.video_file or content.video_url %}
+    <a href="{% url 'streaming:watch_video' content.id %}" class="watch-btn">Watch Now</a>
 {% else %}
     <span style="color: #888;">No video available</span>
 {% endif %}
