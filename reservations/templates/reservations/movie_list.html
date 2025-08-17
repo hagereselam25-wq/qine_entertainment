@@ -1,9 +1,11 @@
+
+    {% load i18n static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Movies</title>
-    <style>
+    <title>{% trans "Movies" %}</title>
+   <style>
         body {
             background-color: #121212;
             color: white;
@@ -56,28 +58,28 @@
     </style>
 </head>
 <body>
-    <h1>Now Showing</h1>
-    <ul>
-      {% for movie in movies %}
-    <li>
-        <h3>{{ movie.title }} - {{ movie.show_time }}</h3>
+<h1>{% trans "Now Showing" %}</h1>
+<ul>
+{% for movie in movies %}
+<li>
+    <h3>{{ movie.title }} - {{ movie.show_time }}</h3>
 
-        {% if movie.poster %}
-            <img src="{{ movie.poster.url }}" alt="{{ movie.title }} poster" width="200" />
-        {% endif %}
+    {% if movie.poster %}
+        <img src="{{ movie.poster.url }}" alt="{{ movie.title }} {% trans "poster" %}" width="200" />
+    {% endif %}
 
-        {% if movie.trailer %}
-            <video width="320" height="240" controls>
-                <source src="{{ movie.trailer.url }}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        {% endif %}
+    {% if movie.trailer %}
+        <video width="320" height="240" controls>
+            <source src="{{ movie.trailer.url }}" type="video/mp4">
+            {% trans "Your browser does not support the video tag." %}
+        </video>
+    {% endif %}
 
-        <br>
-        <a href="{% url 'seat_selection' movie.id %}">Book Seats</a>
-    </li>
+    <br>
+    <a href="{% url 'seat_selection' movie.id %}">{% trans "Book Seats" %}</a>
+</li>
 {% endfor %}
+</ul>
 
-    </ul>
 </body>
 </html>

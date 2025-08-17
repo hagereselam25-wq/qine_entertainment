@@ -2,13 +2,13 @@ from django.contrib import admin
 from django.db.models import Sum, Count
 from django.utils.html import format_html
 from django.http import HttpResponse
+from django.urls import path
+from django.shortcuts import render
 import csv
 
 from .models import StreamingContent, StreamingSubscription, StreamViewLog
-from django.db import models
 
-
-# --- Streaming Content Admin ---
+# ------------------- Streaming Content Admin -------------------
 @admin.register(StreamingContent)
 class StreamingContentAdmin(admin.ModelAdmin):
     list_display = (
@@ -16,33 +16,58 @@ class StreamingContentAdmin(admin.ModelAdmin):
         'category',
         'total_plays',
         'unique_viewers',
-        'total_watch_time_minutes',
+        'total_watch_time_minutes_display',
         'completion_rate',
-        'release_date'
+        'release_date',
+        'hls_folder',
+        'download_analytics_csv'
     )
     search_fields = ('title',)
     list_filter = ('category', 'release_date')
     ordering = ('-release_date',)
-    actions = ['export_as_csv']
+    readonly_fields = ('hls_folder', 'total_watch_time_minutes_display')
 
-    def export_as_csv(self, request, queryset):
-        meta = self.model._meta
-        field_names = [field.name for field in meta.fields]
+    def total_watch_time_minutes_display(self, obj):
+        total_seconds = StreamViewLog.objects.filter(content=obj).aggregate(
+            total=Sum('watch_time_seconds')
+        )['total'] or 0
+        return total_seconds // 60
+    total_watch_time_minutes_display.short_description = 'Total Watch Time (min)'
 
+    def download_analytics_csv(self, obj):
+        return format_html(
+            '<a class="button" href="/admin/streaming/streamingcontent/{}/download_csv/">Download CSV</a>',
+            obj.id
+        )
+    download_analytics_csv.short_description = 'Analytics CSV'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:content_id>/download_csv/',
+                 self.admin_site.admin_view(self.download_csv_view),
+                 name='streamingcontent_download_csv')
+        ]
+        return custom_urls + urls
+
+    def download_csv_view(self, request, content_id):
+        content = self.get_object(request, content_id)
+        logs = StreamViewLog.objects.filter(content=content)
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename={meta.model_name}.csv'
+        response['Content-Disposition'] = f'attachment; filename="{content.title}_analytics.csv"'
         writer = csv.writer(response)
-
-        writer.writerow(field_names)
-        for obj in queryset:
-            writer.writerow([getattr(obj, field) for field in field_names])
-
+        writer.writerow(['User', 'Views', 'Watch Time (min)', 'Completion Rate', 'Country'])
+        for log in logs:
+            writer.writerow([
+                log.user.username,
+                log.views,
+                (log.watch_time_seconds or 0) // 60,
+                log.content.completion_rate,
+                log.country.name if log.country else 'Unknown'
+            ])
         return response
 
-    export_as_csv.short_description = "Export Selected to CSV"
-
-
-# --- Streaming Subscription Admin ---
+# -------------------- Streaming Subscription Admin --------------------
 @admin.register(StreamingSubscription)
 class StreamingSubscriptionAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'email', 'subscription_type', 'amount', 'is_paid', 'access_expires_at')
@@ -55,69 +80,60 @@ class StreamingSubscriptionAdmin(admin.ModelAdmin):
         if obj.qr_code:
             return format_html('<img src="{}" width="150" height="150" />', obj.qr_code.url)
         return "No QR code"
-
     qr_preview.short_description = "QR Code"
 
-
-# --- Stream View Log Admin ---
+# ------------------- Stream View Log Admin -------------------
 @admin.register(StreamViewLog)
 class StreamViewLogAdmin(admin.ModelAdmin):
-    list_display = ('user', 'content', 'views', 'watch_time_minutes', 'last_viewed', 'country')
+    list_display = ('user', 'content', 'views', 'watch_time_minutes_display', 'last_viewed', 'country_display')
     list_filter = ('last_viewed',)
-    search_fields = ('user__username', 'content__title')
+    search_fields = ('userusername', 'contenttitle')
 
+    def watch_time_minutes_display(self, obj):
+        return (obj.watch_time_seconds or 0) // 60
+    watch_time_minutes_display.short_description = 'Watch Time (min)'
 
-# --- Analytics Dashboard ---
+    def country_display(self, obj):
+        return obj.country.name if obj.country else 'Unknown'
+    country_display.short_description = 'Country'
 
-# Dummy model (proxy, no DB table)
-class StreamingAnalytics(models.Model):
-    class Meta:
-        managed = False
-        verbose_name = "Streaming Analytics"
-        verbose_name_plural = "Streaming Analytics"
+# ------------------- Custom Analytics View -------------------
+def streaming_analytics_view(request):
+    logs = StreamViewLog.objects.all()
+    total_views = logs.aggregate(total=Sum('views'))['total'] or 0
+    unique_viewers = logs.values('user').distinct().count()
+    total_watch_time_seconds = logs.aggregate(total=Sum('watch_time_seconds'))['total'] or 0
+    avg_watch_time_per_view = (total_watch_time_seconds / total_views) if total_views else 0
 
+    # Top regions
+    top_regions = {}
+    region_data = logs.values('country').annotate(count=Count('id')).order_by('-count')[:5]
+    total_region_count = sum(item['count'] for item in region_data) or 1
+    for item in region_data:
+        country = item['country'] or 'Unknown'
+        percent = round(item['count'] / total_region_count * 100, 2)
+        top_regions[country] = percent
 
-class StreamingAnalyticsAdmin(admin.ModelAdmin):
-    change_list_template = "admin/streaming/analytics.html"
+    stats = {
+        'total_views': total_views,
+        'unique_viewers': unique_viewers,
+        'total_watch_time_hours': round(total_watch_time_seconds / 3600, 2),
+        'avg_watch_time_per_view_minutes': round(avg_watch_time_per_view / 60, 2),
+        'top_regions': top_regions
+    }
 
-    def has_add_permission(self, request):
-        return False
+    context = dict(
+        admin.site.each_context(request),
+        stats=stats
+    )
+    return render(request, "admin/streaming/analytics.html", context)
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+# ------------------- Add custom URL to admin safely -------------------
+def get_admin_urls(original_urls):
+    custom_urls = [
+        path('streaming/analytics/', admin.site.admin_view(streaming_analytics_view), name='streaming_analytics'),
+    ]
+    return custom_urls + original_urls
 
-    def changelist_view(self, request, extra_context=None):
-        logs = StreamViewLog.objects.all()
-
-        total_views = logs.aggregate(total=Sum('views'))['total'] or 0
-        unique_viewers = logs.values('user').distinct().count()
-        total_watch_time = logs.aggregate(total=Sum('watch_time_minutes'))['total'] or 0
-        avg_watch_time_per_view = (total_watch_time / total_views) if total_views else 0
-        completion_rate = 72.0  # Placeholder fixed value
-
-        # Top regions calculation
-        top_regions = {}
-        if 'country' in [f.name for f in StreamViewLog._meta.get_fields()]:
-            region_data = logs.values('country').annotate(count=Count('id')).order_by('-count')[:5]
-            total_region_count = sum(item['count'] for item in region_data) or 1
-            for item in region_data:
-                country = item['country'] or 'Unknown'
-                percent = round(item['count'] / total_region_count * 100, 2)
-                top_regions[country] = percent
-
-        stats = {
-            'total_views': total_views,
-            'unique_viewers': unique_viewers,
-            'total_watch_time_hours': round(total_watch_time / 60, 2),
-            'avg_watch_time_per_view': round(avg_watch_time_per_view / 60, 2),
-            'completion_rate': completion_rate,
-            'top_regions': top_regions,
-        }
-
-        extra_context = extra_context or {}
-        extra_context.update({'stats': stats})
-        return super().changelist_view(request, extra_context=extra_context)
-
-
-# Register analytics admin with dummy model
-admin.site.register(StreamingAnalytics, StreamingAnalyticsAdmin)
+original_get_urls = admin.site.get_urls
+admin.site.get_urls = lambda: get_admin_urls(original_get_urls())

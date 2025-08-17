@@ -118,7 +118,7 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
+SIGNED_URL_SECRET = os.environ.get('SIGNED_URL_SECRET', 'change-this-in-prod')
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'

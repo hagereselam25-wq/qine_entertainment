@@ -3,12 +3,17 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django_countries.fields import CountryField
 import os
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .utils import convert_mp4_to_hls
+from django.conf import settings
 
 SUBSCRIPTION_CHOICES = (
     ('monthly', 'Monthly'),
     ('annual', 'Annual'),
 )
 
+# -------------------- Transactions --------------------
 class Transaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tx_ref = models.CharField(max_length=100, unique=True)
@@ -19,10 +24,11 @@ class Transaction(models.Model):
     status = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def str(self):
         return f"Transaction {self.tx_ref} - {self.status}"
 
 
+# -------------------- Streaming Subscription --------------------
 class StreamingSubscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     full_name = models.CharField(max_length=100)
@@ -38,10 +44,11 @@ class StreamingSubscription(models.Model):
     def has_access(self):
         return self.is_paid and self.access_expires_at and timezone.now() < self.access_expires_at
 
-    def __str__(self):
+    def str(self):
         return f"{self.full_name} - {self.subscription_type}"
 
 
+# -------------------- Streaming Content --------------------
 class StreamingContent(models.Model):
     CATEGORY_CHOICES = [
         ('movie', 'Movie'),
@@ -55,9 +62,9 @@ class StreamingContent(models.Model):
     description = models.TextField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='movie')
     thumbnail = models.ImageField(upload_to='thumbnails/')
-    video_file = models.FileField(upload_to='secure_videos/', blank=True, null=True,
-                                  help_text="Upload video securely")
+    video_file = models.FileField(upload_to='secure_videos/', blank=True, null=True, help_text="Upload video securely")
     video_url = models.URLField(blank=True, null=True, help_text="Optional external video URL")
+    hls_folder = models.CharField(max_length=255, blank=True, null=True, help_text="Path to generated HLS folder")
     price_per_view = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
     duration_minutes = models.PositiveIntegerField(help_text="Total duration in minutes")
     release_date = models.DateField()
@@ -66,52 +73,70 @@ class StreamingContent(models.Model):
     # Analytics
     total_plays = models.PositiveIntegerField(default=0)
     unique_viewers = models.PositiveIntegerField(default=0)
-    total_watch_time_minutes = models.PositiveIntegerField(default=0)  # Total watch time in minutes
-    completion_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)  # % value
+    total_watch_time_seconds = models.PositiveIntegerField(default=0)
+    completion_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
 
-    def __str__(self):
+    def str(self):
         return self.title
 
-    def average_watch_time(self):
-        return (self.total_watch_time_minutes / self.total_plays) if self.total_plays else 0
 
+@receiver(post_save, sender=StreamingContent)
+def convert_video_to_hls(sender, instance, created, **kwargs):
+    if created and instance.video_file and instance.video_file.name.lower().endswith('.mp4'):
+        mp4_path = instance.video_file.path
+        output_dir = os.path.join(settings.MEDIA_ROOT, 'hls')
+        hls_folder, master_playlist = convert_mp4_to_hls(mp4_path, output_dir, instance.id)
+        instance.hls_folder = hls_folder
+        instance.save(update_fields=['hls_folder'])
 
+# -------------------- Stream View Log --------------------
 class StreamViewLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.ForeignKey(StreamingContent, on_delete=models.CASCADE)
     views = models.IntegerField(default=0)
     last_viewed = models.DateTimeField(auto_now=True)
-    watch_time_minutes = models.PositiveIntegerField(default=0)
-    country = CountryField(blank=True, null=True)  # Track user region
-
-    def __str__(self):
-        return f"{self.user.username} - {self.content.title}"
+    watch_time_seconds = models.PositiveIntegerField(default=0)  # track in seconds
+    country = CountryField(blank=True, null=True)
 
     class Meta:
-        unique_together = ('user', 'content')  # One log per user per content
+        unique_together = ('user', 'content')
 
+    def str(self):
+        return f"{self.user.username} - {self.content.title}"
+
+
+# -------------------- User Profile --------------------
 def profile_image_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"profile_{instance.user.id}.{ext}"
     return os.path.join('profile_pics', filename)
 
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_picture = models.ImageField(
-        upload_to=profile_image_path,
-        default='profile_pics/default_profile.png'
-    )
+    profile_picture = models.ImageField(upload_to=profile_image_path, default='profile_pics/default_profile.png')
     bio = models.TextField(blank=True, null=True)
 
-    def __str__(self):
+    def str(self):
         return self.user.username
 
 
+# -------------------- Watch History --------------------
 class WatchHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     video_title = models.CharField(max_length=255)
     watch_date = models.DateTimeField(default=timezone.now)
     duration_watched = models.PositiveIntegerField(default=0)  # in minutes
 
-    def __str__(self):
+    def str(self):
         return f"{self.user.username} - {self.video_title}"
+    
+
+# models.py
+from django.db import models
+
+class StreamingAnalytics(models.Model):
+    class Meta:
+        managed = False  # No database table
+        verbose_name = "Streaming Analytics"
+        verbose_name_plural = "Streaming Analytics"

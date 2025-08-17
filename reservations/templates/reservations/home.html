@@ -1,137 +1,129 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cinema Ticket Reservation</title>
-
-  <!-- Fonts and Icons -->
+  <title>{% trans "Cinema Ticket Reservation" %}</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
-  <!-- CSS -->
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-  <header>
-    <h1>Cinema Ticket Reservation</h1>
-    <nav class="main-nav">
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'streaming:streaming_home' %}">Streaming</a>
-      {% if user.is_authenticated %}
-        <div class="user-profile-header">
-          {% if user.userprofile.profile_picture %}
-            <img src="{{ user.userprofile.profile_picture.url }}" alt="{{ user.username }}" class="profile-thumb">
-          {% else %}
-            <img src="{% static 'img/default_profile.png' %}" alt="{{ user.username }}" class="profile-thumb">
-          {% endif %}
-          <span>Welcome, {{ user.username }}</span>
-          <a href="{% url 'streaming:user_profile' %}">Profile</a>
-          <a href="{% url 'streaming:logout' %}">Logout</a>
-        </div>
-      {% else %}
-        <a href="{% url 'streaming:login' %}">Login</a>
-        <a href="{% url 'streaming:signup' %}">Sign Up</a>
-      {% endif %}
-    </nav>
-  </header>
+<header>
+  <h1>{% trans "Cinema Ticket Reservation" %}</h1>
+  <nav class="main-nav">
+    <a href="{% url 'home' %}">{% trans "Home" %}</a>
+    <a href="{% url 'streaming:streaming_home' %}">{% trans "Streaming" %}</a>
+    {% if user.is_authenticated %}
+      <div class="user-profile-header">
+        {% if user.userprofile.profile_picture %}
+          <img src="{{ user.userprofile.profile_picture.url }}" alt="{{ user.username }}" class="profile-thumb">
+        {% else %}
+          <img src="{% static 'img/default_profile.png' %}" alt="{{ user.username }}" class="profile-thumb">
+        {% endif %}
+        <span>{% blocktrans %}Welcome, {{ user.username }}{% endblocktrans %}</span>
+        <a href="{% url 'streaming:user_profile' %}">{% trans "Profile" %}</a>
+        <a href="{% url 'streaming:logout' %}">{% trans "Logout" %}</a>
+      </div>
+    {% else %}
+      <a href="{% url 'streaming:login' %}">{% trans "Login" %}</a>
+      <a href="{% url 'streaming:signup' %}">{% trans "Sign Up" %}</a>
+    {% endif %}
+  </nav>
+</header>
 
-  <div class="search-bar">
-    <form method="GET" action="{% url 'home' %}">
-      <input type="text" name="q" placeholder="Search movies..." value="{{ query|default:'' }}">
-      <button type="submit">Search</button>
-    </form>
+<div class="search-bar">
+  <form method="GET" action="{% url 'home' %}">
+    <input type="text" name="q" placeholder="{% trans "Search movies..." %}" value="{{ query|default:'' }}">
+    <button type="submit">{% trans "Search" %}</button>
+  </form>
+</div>
+
+{% if featured_movies %}
+<div class="carousel">
+  <div class="carousel-track" id="carouselTrack">
+    {% for movie in featured_movies %}
+      <div class="carousel-slide">
+        {% if movie.poster %}
+          <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
+        {% else %}
+          <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
+        {% endif %}
+      </div>
+    {% endfor %}
   </div>
+  <div class="carousel-controls">
+    <button onclick="prevSlide()">‹</button>
+    <button onclick="nextSlide()">›</button>
+  </div>
+</div>
+{% endif %}
 
-  <!-- Carousel -->
-  {% if featured_movies %}
-  <div class="carousel">
-    <div class="carousel-track" id="carouselTrack">
-      {% for movie in featured_movies %}
-        <div class="carousel-slide">
+<section class="section-panel booking-panel">
+  <h2 class="section-title">🎟 {% trans "Book a Movie Ticket" %}</h2>
+  <div class="movie-grid">
+    {% for movie in movies %}
+      {% if not movie.is_streaming %}
+        <div class="movie-card">
           {% if movie.poster %}
             <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
           {% else %}
             <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
           {% endif %}
+          <div class="content">
+            <h3>{{ movie.title }}</h3>
+            <div class="stars">
+              {% for i in '12345' %}
+                {% if forloop.counter <= movie.rating %}
+                  <i class="fas fa-star"></i>
+                {% else %}
+                  <i class="far fa-star"></i>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <a class="book-btn" href="{% url 'seat_selection' movie.id %}">{% trans "Book Now" %}</a>
+          </div>
         </div>
-      {% endfor %}
-    </div>
-    <div class="carousel-controls">
-      <button onclick="prevSlide()">‹</button>
-      <button onclick="nextSlide()">›</button>
-    </div>
+      {% endif %}
+    {% endfor %}
   </div>
-  {% endif %}
+</section>
 
-  <!-- Booking Section -->
-  <section class="section-panel booking-panel">
-    <h2 class="section-title">🎟 Book a Movie Ticket</h2>
-    <div class="movie-grid">
-      {% for movie in movies %}
-        {% if not movie.is_streaming %}
-          <div class="movie-card">
-            {% if movie.poster %}
-              <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
-            {% else %}
-              <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
-            {% endif %}
-            <div class="content">
-              <h3>{{ movie.title }}</h3>
-              <div class="stars">
-                {% for i in '12345' %}
-                  {% if forloop.counter <= movie.rating %}
-                    <i class="fas fa-star"></i>
-                  {% else %}
-                    <i class="far fa-star"></i>
-                  {% endif %}
-                {% endfor %}
-              </div>
-              <a class="book-btn" href="{% url 'seat_selection' movie.id %}">Book Now</a>
-            </div>
-          </div>
-        {% endif %}
-      {% endfor %}
-    </div>
-  </section>
-
-  <!-- Streaming Section -->
-  <section class="section-panel streaming-panel">
-    <h2 class="section-title">📺 Watch Online (Streaming)</h2>
-    <div class="movie-grid">
-      {% for movie in movies %}
-        {% if movie.is_streaming %}
-          <div class="movie-card">
-            {% if movie.poster %}
+<section class="section-panel streaming-panel">
+  <h2 class="section-title">📺 {% trans "Watch Online (Streaming)" %}</h2>
+  <div class="movie-grid">
+    {% for movie in movies %}
+      {% if movie.is_streaming %}
+        <div class="movie-card">
+          {% if movie.poster %}
             <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
-            {% else %}
-              <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
-            {% endif %}
-            <div class="content">
-              <h3>{{ movie.title }}</h3>
-              <div class="stars">
-                {% for i in '12345' %}
-                  {% if forloop.counter <= movie.rating %}
-                    <i class="fas fa-star"></i>
-                  {% else %}
-                    <i class="far fa-star"></i>
-                  {% endif %}
-                {% endfor %}
-              </div>
-              {% if user.is_authenticated %}
-                <a class="book-btn" href="{{ movie.stream_url }}">Stream</a>
-              {% else %}
-                <a class="book-btn" href="{% url 'streaming:login' %}">Login to Stream</a>
-              {% endif %}
+          {% else %}
+            <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
+          {% endif %}
+          <div class="content">
+            <h3>{{ movie.title }}</h3>
+            <div class="stars">
+              {% for i in '12345' %}
+                {% if forloop.counter <= movie.rating %}
+                  <i class="fas fa-star"></i>
+                {% else %}
+                  <i class="far fa-star"></i>
+                {% endif %}
+              {% endfor %}
             </div>
+            {% if user.is_authenticated %}
+              <a class="book-btn" href="{{ movie.stream_url }}">{% trans "Stream" %}</a>
+            {% else %}
+              <a class="book-btn" href="{% url 'streaming:login' %}">{% trans "Login to Stream" %}</a>
+            {% endif %}
           </div>
-        {% endif %}
-      {% endfor %}
-    </div>
-  </section>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</section>
 
-  <!-- JS -->
-  <script src="{% static 'js/scripts.js' %}"></script>
+<script src="{% static 'js/scripts.js' %}"></script>
 </body>
 </html>

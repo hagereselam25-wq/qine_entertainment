@@ -1,11 +1,12 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Payment Failed</title>
+    <title>{% trans "Payment Failed" %}</title>
 </head>
 <body>
-    <h1>Payment Failed</h1>
-    <p>We couldn't verify your payment. Please try again or contact support.</p>
-    <a href="{% url 'home' %}">← Back to Home</a>
+    <h1>{% trans "Payment Failed" %}</h1>
+    <p>{% trans "We couldn't verify your payment. Please try again or contact support." %}</p>
+    <a href="{% url 'home' %}">← {% trans "Back to Home" %}</a>
 </body>
 </html>
