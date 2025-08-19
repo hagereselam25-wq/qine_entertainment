@@ -12,6 +12,7 @@ import requests
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from django.core.files.storage import default_storage
 
 
@@ -23,7 +24,7 @@ def video_detail(request, pk):
 
     # Access control logic
     if not video.is_public and video.uploaded_by != request.user and not request.user.is_superuser:
-        return HttpResponseForbidden("You don't have permission to view this video.")
+        return HttpResponseForbidden(_("You don't have permission to view this video."))
 
     return render(request, 'videos/video_detail.html', {'video': video})
 
@@ -68,12 +69,12 @@ def seat_selection(request, movie_id):
         try:
             amount = float(amount)
             if amount <= 0:
-                raise ValueError("Invalid amount")
+                raise ValueError(_("Invalid amount"))
         except:
             return render(request, 'reservations/seat_selection.html', {
                 'movie': movie,
                 'seats': seats,
-                'error': 'Please enter a valid payment amount.'
+                'error': _('Please enter a valid payment amount.')
             })
 
         try:
@@ -83,7 +84,7 @@ def seat_selection(request, movie_id):
                 return render(request, 'reservations/seat_selection.html', {
                     'movie': movie,
                     'seats': seats,
-                    'error': 'Seat already booked.'
+                    'error': _('Seat already booked.')
                 })
 
             seat.is_booked = True
@@ -113,9 +114,10 @@ def seat_selection(request, movie_id):
                 "first_name": name,
                 "tx_ref": tx_ref,
                 "callback_url": request.build_absolute_uri("/payment/verify/"),
+
                 "return_url": request.build_absolute_uri(f"/payment/success/?tx_ref={tx_ref}"),
-                "customization[title]": f"Ticket for {movie.title}",
-                "customization[description]": "Cinema seat booking"
+                "customization[title]": _(f"Ticket for {movie.title}"),
+                "customization[description]": _("Cinema seat booking")
             }
 
             headers = {
@@ -135,14 +137,14 @@ def seat_selection(request, movie_id):
                 return render(request, 'reservations/seat_selection.html', {
                     'movie': movie,
                     'seats': seats,
-                    'error': 'Payment initialization failed. Try again.'
+                    'error': _('Payment initialization failed. Try again.')
                 })
 
         except Seat.DoesNotExist:
             return render(request, 'reservations/seat_selection.html', {
                 'movie': movie,
                 'seats': seats,
-                'error': 'Invalid seat.'
+                'error': _('Invalid seat.')
             })
 
     return render(request, 'reservations/seat_selection.html', {
@@ -151,20 +153,10 @@ def seat_selection(request, movie_id):
     })
 
 
-import requests
-from django.core.files.base import ContentFile
-from io import BytesIO
-import qrcode
-from django.shortcuts import render, get_object_or_404
-from .models import Reservation, Transaction
-from django.conf import settings
-
-from django.core.mail import EmailMessage
-
 def payment_success(request):
     tx_ref = request.GET.get("tx_ref")
     if not tx_ref:
-        return render(request, "reservations/payment_failed.html", {"error": "Transaction reference missing."})
+        return render(request, "reservations/payment_failed.html", {"error": _("Transaction reference missing.")})
 
     url = f"https://api.chapa.co/v1/transaction/verify/{tx_ref}"
     headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
@@ -172,13 +164,13 @@ def payment_success(request):
     chapa_data = response.json()
 
     if chapa_data.get("status") != "success":
-        return render(request, "reservations/payment_failed.html", {"error": "Payment verification failed."})
+        return render(request, "reservations/payment_failed.html", {"error": _("Payment verification failed.")})
 
     try:
         transaction = Transaction.objects.get(transaction_id=tx_ref)
         reservation = transaction.reservation
     except Transaction.DoesNotExist:
-        return render(request, "reservations/payment_failed.html", {"error": "Transaction not found."})
+        return render(request, "reservations/payment_failed.html", {"error": _("Transaction not found.")})
 
     if not reservation.is_paid:
         reservation.is_paid = True
@@ -187,7 +179,7 @@ def payment_success(request):
         transaction.status = "success"
         transaction.save()
 
-        qr = qrcode.make(f"Reservation ID: {reservation.id} - Seat: {reservation.seat.seat_number}")
+        qr = qrcode.make(_(f"Reservation ID: {reservation.id} - Seat: {reservation.seat.seat_number}"))
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
         reservation.qr_code.save(f"qr_{reservation.id}.png", ContentFile(buffer.getvalue()))
@@ -195,8 +187,8 @@ def payment_success(request):
 
     # Send email only if not sent yet
     if not reservation.email_sent:
-        subject = "🎟 Your Cinema Ticket Confirmation"
-        message = f"Dear {reservation.user},\n\nYour ticket has been confirmed. Seat: {reservation.seat.seat_number}"
+        subject = _("🎟 Your Cinema Ticket Confirmation")
+        message = _(f"Dear {reservation.user},\n\nYour ticket has been confirmed. Seat: {reservation.seat.seat_number}")
 
         email_msg = EmailMessage(subject, message, to=[reservation.email])
         email_msg.attach(f"ticket_qr_{reservation.id}.png", reservation.qr_code.read(), "image/png")
@@ -211,77 +203,40 @@ def payment_success(request):
     })
 
 
-
 # Ticket confirmation page
 def ticket_confirmation(request, ticket_id):
     reservation = get_object_or_404(Reservation, id=ticket_id)
     if not reservation.is_paid:
-        return HttpResponse("Ticket is not paid yet. Please complete payment to access.")
+        return HttpResponse(_("Ticket is not paid yet. Please complete payment to access."))
     return render(request, 'reservations/ticket_confirmation.html', {
         'reservation': reservation
     })
 
+import base64
+from io import BytesIO
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.core.mail import EmailMessage
-from django.conf import settings
-from .models import Reservation, Transaction
+from django.utils.translation import gettext_lazy as _
 import qrcode
-from io import BytesIO
-import base64
-
-import base64
-from io import BytesIO
-from django.conf import settings
-from django.shortcuts import render
-from django.core.mail import EmailMessage
-import qrcode
-from .models import Reservation, Transaction
-
-
-from django.core.mail import EmailMessage
-from django.conf import settings
-from django.shortcuts import render
-from .models import Reservation, Transaction
-import qrcode
-import base64
-from io import BytesIO
-
-from django.shortcuts import render
-from .models import Reservation, Transaction
-import qrcode
-import base64
-from io import BytesIO
-from django.core.mail import EmailMessage
-from django.conf import settings
-
-from django.shortcuts import render, redirect
-from django.conf import settings
-from django.core.mail import EmailMessage
-from .models import Reservation, Transaction
 import requests
-import qrcode
-from io import BytesIO
-import base64
+from .models import Reservation, Transaction, Movie, Seat
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.files.base import ContentFile
 
-import qrcode
-import base64
-import requests
-from io import BytesIO
-from django.conf import settings
-from django.core.mail import EmailMessage
-from django.shortcuts import render, redirect
-from .models import Reservation, Transaction
 
 def payment_verify(request):
     tx_ref = request.GET.get('tx_ref')
     if not tx_ref:
-        return render(request, "reservations/payment_failed.html", {"error": "Missing tx_ref."})
+        return render(request, "reservations/payment_failed.html", {"error": _("Missing tx_ref.")})
 
     try:
         transaction = Transaction.objects.get(transaction_id=tx_ref)
         reservation = transaction.reservation
     except Transaction.DoesNotExist:
-        return render(request, "reservations/payment_failed.html", {"error": "Transaction not found."})
+        return render(request, "reservations/payment_failed.html", {"error": _("Transaction not found.")})
 
     # Check if already verified
     if reservation.is_paid:
@@ -300,7 +255,7 @@ def payment_verify(request):
         reservation.is_paid = True
 
         # Generate QR code
-        qr = qrcode.make(f"Reservation ID: {reservation.id}, Seat: {reservation.seat.seat_number}, Movie: {reservation.movie.title}")
+        qr = qrcode.make(_(f"Reservation ID: {reservation.id}, Seat: {reservation.seat.seat_number}, Movie: {reservation.movie.title}"))
         buffer = BytesIO()
         qr.save(buffer)
         filename = f"ticket_qr_{reservation.id}.png"
@@ -311,8 +266,8 @@ def payment_verify(request):
         transaction.save()
 
         # Send confirmation email with QR
-        subject = "🎟️ Your Cinema Ticket Confirmation"
-        message = f"""
+        subject = _("🎟 Your Cinema Ticket Confirmation")
+        message = _(f"""
 Hello {reservation.user},
 
 ✅ Your payment for '{reservation.movie.title}' has been confirmed.
@@ -323,7 +278,7 @@ Hello {reservation.user},
 Please show the attached QR code at the entrance.
 
 Enjoy your show!
-"""
+""")
         email = EmailMessage(subject, message, to=[reservation.email])
         email.attach(filename, buffer.getvalue(), 'image/png')
         email.send()
@@ -333,12 +288,11 @@ Enjoy your show!
     else:
         transaction.status = "failed"
         transaction.save()
-        return render(request, "reservations/payment_failed.html", {"error": "Payment verification failed."})
+        return render(request, "reservations/payment_failed.html", {"error": _("Payment verification failed.")})
 
 
 def payment_cancel(request):
     return render(request, 'reservations/payment_cancel.html')
-
 
 
 # Admin dashboard view
@@ -368,7 +322,7 @@ def admin_login(request):
             login(request, user)
             return redirect('admin_dashboard')
         else:
-            messages.error(request, 'Invalid credentials or not authorized.')
+            messages.error(request, _('Invalid credentials or not authorized.'))
 
     return render(request, 'reservations/admin_login.html')
 
@@ -377,9 +331,6 @@ def admin_login(request):
 def admin_logout(request):
     logout(request)
     return redirect('home')
-
-
-# Payment verification view with QR code generation and transaction update
 
 # Thank you page after successful payment
 def thank_you(request):

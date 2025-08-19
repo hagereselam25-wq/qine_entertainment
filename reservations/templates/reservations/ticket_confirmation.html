@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{% get_current_language %}">
 <head>
     <meta charset="UTF-8">
-    <title>Ticket Confirmation</title>
+    <title>{% trans "Ticket Confirmation" %}</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -51,25 +51,29 @@
     </style>
 </head>
 <body>
-    <h1>Your Booking is Confirmed!</h1>
+    <h1>{% trans "Your Booking is Confirmed!" %}</h1>
 
     <div class="ticket">
         <h2>{{ reservation.movie.title }}</h2>
-        <p><strong>Name:</strong> {{ reservation.user }}</p>
-        <p><strong>Email:</strong> {{ reservation.email }}</p>
-        <p><strong>Seat:</strong> {{ reservation.seat.seat_number }}</p>
-        <p><strong>Show Time:</strong> {{ reservation.movie.show_time }}</p>
+        <p><strong>{% trans "Name:" %}</strong> {{ reservation.user }}</p>
+        <p><strong>{% trans "Email:" %}</strong> {{ reservation.email }}</p>
+        <p><strong>{% trans "Seat:" %}</strong> {{ reservation.seat.seat_number }}</p>
+        <p><strong>{% trans "Show Time:" %}</strong> {{ reservation.movie.show_time }}</p>
 
         <!-- QR Code will be generated here -->
         <div id="qrcode"></div>
-        <a id="download-btn" class="download-btn" href="#" download="qrcode.png">Download QR Code</a>
+        <a id="download-btn" class="download-btn" href="#" download="qrcode.png">{% trans "Download QR Code" %}</a>
     </div>
 
     <!-- Load QRCode.js from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         // Build QR data from reservation
-        const qrData = `Reservation ID: {{ reservation.id }}\nMovie: {{ reservation.movie.title }}\nSeat: {{ reservation.seat.seat_number }}\nName: {{ reservation.user }}\nEmail: {{ reservation.email }}`;
+        const qrData = Reservation ID: {{ reservation.id }}
+Movie: {{ reservation.movie.title }}
+Seat: {{ reservation.seat.seat_number }}
+Name: {{ reservation.user }}
+Email: {{ reservation.email }};
 
         // Generate QR Code
         const qrcodeContainer = document.getElementById('qrcode');

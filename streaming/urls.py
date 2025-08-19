@@ -22,6 +22,15 @@ urlpatterns = [
     path('logout/', views.user_logout, name='logout'),
     path('profile/', user_profile, name='user_profile'),
 
+    path('admin/streaming/streaminganalytics/', views.streaming_analytics, name='streaming_analytics'),
+    path('admin/streaming/streaminganalytics/export_csv/', views.export_analytics_csv, name='export_analytics_csv'),
+
+    path("analytics/", views.streaming_analytics, name="analytics"),
+    path("analytics/download/", views.export_analytics_csv, name="export_analytics_csv"),
+    path('export-analytics-csv/', views.export_analytics_csv, name='export_analytics_csv'),
+    path("analytics/", views.streaming_analytics, name="streaming_analytics"),
+    path("analytics/download-csv/", views.export_analytics_csv, name="export_analytics_csv"),
 ]
+
 
 

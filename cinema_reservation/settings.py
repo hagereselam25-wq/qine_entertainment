@@ -141,3 +141,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'hagereselam25@gmail.com'         
 EMAIL_HOST_PASSWORD = 'zdcurgoccldphprg'  
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]

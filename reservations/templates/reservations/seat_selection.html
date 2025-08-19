@@ -1,8 +1,9 @@
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Seat Selection</title>
+    <title>{% trans "Seat Selection" %}</title>
     <style>
         /* Your existing styles remain unchanged */
         body {
@@ -118,31 +119,34 @@
     </style>
 </head>
 <body>
-    <h1>Seat Selection for {{ movie.title }}</h1>
+    <h1>{% blocktrans with title=movie.title %}Seat Selection for {{ title }}{% endblocktrans %}</h1>
 
     <div class="form-container">
         <form method="POST">
             {% csrf_token %}
-            <label for="name">Your Name:</label>
+            <label for="name">{% trans "Your Name:" %}</label>
             <input type="text" id="name" name="name" required>
             
-            <label for="email">Your Email:</label>
+            <label for="email">{% trans "Your Email:" %}</label>
             <input type="email" id="email" name="email" required>
             
-            <label for="seat_id">Select Seat:</label>
+            <label for="seat_id">{% trans "Select Seat:" %}</label>
             <select name="seat_id" id="seat_id" required>
                 {% for seat in seats %}
                     <option value="{{ seat.id }}" {% if seat.is_booked %}disabled{% endif %}>
-                        Seat {{ seat.seat_number }} {% if seat.is_booked %}- Booked{% endif %}
+                        {% blocktrans with seatnum=seat.seat_number %}
+                            Seat {{ seatnum }}
+                        {% endblocktrans %}
+                        {% if seat.is_booked %}- {% trans "Booked" %}{% endif %}
                     </option>
                 {% endfor %}
             </select>
 
-            <!-- New payment amount input -->
-            <label for="amount">Payment Amount (ETB):</label>
-            <input type="number" id="amount" name="amount" min="1" step="0.01" placeholder="Enter payment amount" required>
+<!-- New payment amount input -->
+            <label for="amount">{% trans "Payment Amount (ETB):" %}</label>
+            <input type="number" id="amount" name="amount" min="1" step="0.01" placeholder="{% trans 'Enter payment amount' %}" required>
 
-            <button type="submit">Confirm Reservation & Pay</button>
+            <button type="submit">{% trans "Confirm Reservation & Pay" %}</button>
         </form>
 
         {% if error %}
@@ -154,9 +158,9 @@
         {% for seat in seats %}
             <div class="seat {% if seat.is_booked %}booked{% endif %}" data-seat-id="{{ seat.id }}" onclick="selectSeat({{ seat.id }}, {{ seat.is_booked|yesno:'true,false' }})">
                 {% if not seat.is_booked %}
-                    <span>Seat {{ seat.seat_number }}</span>
+                    {% blocktrans with seatnum=seat.seat_number %}Seat {{ seatnum }}{% endblocktrans %}
                 {% else %}
-                    <span>Booked</span>
+                    <span>{% trans "Booked" %}</span>
                 {% endif %}
             </div>
         {% endfor %}
@@ -165,8 +169,8 @@
     <!-- Popup for booked seat -->
     <div class="popup" id="popup">
         <div class="popup-content">
-            <p>Sorry, this seat is already booked. Please select another available seat.</p>
-            <button onclick="closePopup()">Close</button>
+            <p>{% trans "Sorry, this seat is already booked. Please select another available seat." %}</p>
+            <button onclick="closePopup()">{% trans "Close" %}</button>
         </div>
     </div>
 
@@ -190,6 +194,3 @@
     </script>
 </body>
 </html>
-
-
-

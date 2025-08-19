@@ -1,39 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
+{% load i18n %}
 
 {% block content %}
 <div class="container" style="max-width:900px; margin:50px auto;">
 
     <!-- Profile Card -->
     <div class="movie-card" style="display:flex; align-items:center; gap:20px; padding:20px;">
-        <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid var(--accent);">
+        <img src="{{ profile.profile_picture.url }}" alt="{% trans 'Profile Picture' %}" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid var(--accent);">
         <div style="flex:1;">
             <h2 style="margin-top:0;">{{ request.user.get_full_name|default:request.user.username }}</h2>
             <form method="post" enctype="multipart/form-data" style="margin-top:10px;">
                 {% csrf_token %}
                 {{ form.as_p }}
-                <button type="submit" class="book-btn">Update Picture</button>
+                <button type="submit" class="book-btn">{% trans "Update Picture" %}</button>
             </form>
         </div>
     </div>
 
     <!-- Stats -->
     <div class="movie-card" style="margin-top:30px; padding:20px;">
-        <h3>Stats</h3>
-        <p><strong>Total Videos Watched:</strong> {{ total_videos }}</p>
-        <p><strong>Total Watch Time:</strong> {{ total_watch_time }} minutes</p>
+        <h3>{% trans "Stats" %}</h3>
+        <p><strong>{% trans "Total Videos Watched:" %}</strong> {{ total_videos }}</p>
+        <p><strong>{% trans "Total Watch Time:" %}</strong> {{ total_watch_time }} {% trans "minutes" %}</p>
     </div>
 
     <!-- Watch History -->
     <div class="movie-card" style="margin-top:30px; padding:20px;">
-        <h3>Watch History</h3>
+        <h3>{% trans "Watch History" %}</h3>
         {% if watch_history %}
             <table style="width:100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: var(--accent); color:white;">
-                        <th style="padding:10px;">Video Title</th>
-                        <th style="padding:10px;">Watch Date</th>
-                        <th style="padding:10px;">Duration Watched</th>
+                        <th style="padding:10px;">{% trans "Video Title" %}</th>
+                        <th style="padding:10px;">{% trans "Watch Date" %}</th>
+                        <th style="padding:10px;">{% trans "Duration Watched" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -41,13 +42,13 @@
                     <tr style="border-bottom:1px solid #ddd;">
                         <td style="padding:10px;">{{ history.video_title }}</td>
                         <td style="padding:10px;">{{ history.watch_date|date:"M d, Y H:i" }}</td>
-                        <td style="padding:10px;">{{ history.duration_watched }} min</td>
+                        <td style="padding:10px;">{{ history.duration_watched }} {% trans "min" %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% else %}
-            <p>No watch history found.</p>
+            <p>{% trans "No watch history found." %}</p>
         {% endif %}
     </div>
 

@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Thank You</title>
+    <title>{% trans "Thank You" %}</title>
 </head>
 <body>
-    <h1>Thank you for your reservation!</h1>
-    <p>Your reference: {{ reservation.id }}</p>
-    <p>Name: {{ reservation.full_name }}</p>
-    <p>Movie: {{ reservation.movie.title }}</p>
-    <p>Date: {{ reservation.show_date }}</p>
-    <p>Seat: {{ reservation.seat_number }}</p>
+    <h1>{% trans "Thank you for your reservation!" %}</h1>
+    <p>{% trans "Your reference:" %} {{ reservation.id }}</p>
+    <p>{% trans "Name:" %} {{ reservation.full_name }}</p>
+    <p>{% trans "Movie:" %} {{ reservation.movie.title }}</p>
+    <p>{% trans "Date:" %} {{ reservation.show_date }}</p>
+    <p>{% trans "Seat:" %} {{ reservation.seat_number }}</p>
 
-    <h3>QR Code Confirmation</h3>
-    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code" />
+    <h3>{% trans "QR Code Confirmation" %}</h3>
+    <img src="data:image/png;base64,{{ qr_base64 }}" alt="{% trans 'QR Code' %}" />
     <br>
     <a href="data:image/png;base64,{{ qr_base64 }}" download="ticket_{{ reservation.id }}.png">
-        <button>Download Ticket QR</button>
+        <button>{% trans "Download Ticket QR" %}</button>
     </a>
     <br><br>
-    <h2>Reservation Successful 🎉</h2>
-    <p>Thank you for your payment. Here is your ticket:</p>
+    <h2>{% trans "Reservation Successful 🎉" %}</h2>
+    <p>{% trans "Thank you for your payment. Here is your ticket:" %}</p>
 
     <br>
-    <a href="{{ redirect_url }}">← Return to Home</a>
+    <a href="{{ redirect_url }}">← {% trans "Return to Home" %}</a>
 </body>
 </html>

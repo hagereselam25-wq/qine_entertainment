@@ -1,13 +1,21 @@
-<h2>Payment Successful!</h2>
-<p>Thank you, {{ reservation.user }}. Your seat {{ reservation.seat.seat_number }} is confirmed.</p>
+{% load i18n %}
+
+<h2>{% trans "Payment Successful!" %}</h2>
+<p>
+  {% blocktrans with username=reservation.user seat=reservation.seat.seat_number %}
+    Thank you, {{ username }}. Your seat {{ seat }} is confirmed.
+  {% endblocktrans %}
+</p>
 
 {% if qr_url %}
-    <img src="{{ qr_url }}" alt="Your Ticket QR Code" style="max-width:300px;"/>
+    <img src="{{ qr_url }}" alt="{% trans 'Your Ticket QR Code' %}" style="max-width:300px;"/>
     <p>
-      <a href="{{ qr_url }}" download="ticket_qr_{{ reservation.id }}.png">⬇️ Download QR Code</a>
+      <a href="{{ qr_url }}" download="ticket_qr_{{ reservation.id }}.png">⬇️ {% trans "Download QR Code" %}</a>
     </p>
 {% else %}
-    <p>QR code is not available.</p>
+    <p>{% trans "QR code is not available." %}</p>
 {% endif %}
 
-<p><a href="{% url 'home' %}">← Return to Home</a></p>
+<p>
+  <a href="{% url 'home' %}">← {% trans "Return to Home" %}</a>
+</p>

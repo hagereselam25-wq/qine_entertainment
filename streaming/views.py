@@ -2,10 +2,11 @@ import uuid
 from django.core.files.base import ContentFile
 import requests
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, FileResponse, JsonResponse
+from django.http import HttpResponse, Http404, FileResponse, JsonResponse, HttpResponseBadRequest
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from io import BytesIO
 from datetime import timedelta
 import time
@@ -13,7 +14,49 @@ import hmac
 import hashlib
 import os
 import qrcode
+import json
 
+import uuid
+import json
+import os
+import time
+import hmac
+import hashlib
+from io import BytesIO
+from datetime import timedelta
+
+import requests
+import qrcode
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse, Http404, FileResponse, JsonResponse, HttpResponseBadRequest
+from django.core.files.base import ContentFile
+from django.core.mail import EmailMessage
+from django.conf import settings
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.urls import reverse
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from django.db.models import F, Sum, Count
+
+from .models import (
+    StreamingSubscription, StreamingContent,
+    Transaction, StreamViewLog, UserProfile
+)
+from .forms import StreamingSubscriptionForm, CustomUserSignupForm, ProfileUpdateForm
+from .utils import generate_signed_url
+
+
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -21,12 +64,13 @@ from django.urls import reverse
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from django.contrib.auth.models import User
+from django.db.models import F, Sum, Count
 
 from .models import (
     StreamingSubscription, StreamingContent,
-    Transaction, StreamViewLog
+    Transaction, StreamViewLog, UserProfile
 )
-from .forms import StreamingSubscriptionForm, CustomUserSignupForm
+from .forms import StreamingSubscriptionForm, CustomUserSignupForm, ProfileUpdateForm
 from .utils import generate_signed_url
 
 CHAPA_BASE_URL = "https://api.chapa.co/v1"
@@ -58,7 +102,7 @@ def create_subscription(request):
                 "tx_ref": tx_ref,
                 "callback_url": request.build_absolute_uri('/streaming/verify/'),
                 "return_url": request.build_absolute_uri(f'/streaming/verify/?tx_ref={tx_ref}'),
-                "customization[title]": "Streaming"
+                "customization[title]": _("Streaming")
             }
 
             headers = {"Authorization": f"Bearer {CHAPA_SECRET_KEY}"}
@@ -68,7 +112,7 @@ def create_subscription(request):
                 payment_url = response.json()['data']['checkout_url']
                 return redirect(payment_url)
             else:
-                return HttpResponse(f"Failed to initialize Chapa payment. Response: {response.text}", status=500)
+                return HttpResponse(_("Failed to initialize Chapa payment. Response: %(response)s") % {'response': response.text}, status=500)
     else:
         form = StreamingSubscriptionForm()
 
@@ -77,7 +121,7 @@ def create_subscription(request):
 def verify_subscription_payment(request):
     tx_ref = request.GET.get('tx_ref')
     if not tx_ref:
-        return HttpResponse("No transaction reference provided.")
+        return HttpResponse(_("No transaction reference provided."))
 
     subscription = get_object_or_404(StreamingSubscription, chapa_tx_ref=tx_ref)
 
@@ -92,14 +136,16 @@ def verify_subscription_payment(request):
         if data['status'] == 'success':
             subscription.is_paid = True
 
-            # Set expiration
             if subscription.subscription_type == 'monthly':
                 subscription.access_expires_at = timezone.now() + timedelta(days=30)
             elif subscription.subscription_type == 'annual':
                 subscription.access_expires_at = timezone.now() + timedelta(days=365)
 
-            # Generate QR
-            qr_data = f"CineHub Subscription\nName: {subscription.full_name}\nEmail: {subscription.email}\nType: {subscription.subscription_type}"
+            qr_data = _("CineHub Subscription\nName: %(name)s\nEmail: %(email)s\nType: %(type)s") % {
+                'name': subscription.full_name,
+                'email': subscription.email,
+                'type': subscription.subscription_type
+            }
             qr = qrcode.make(qr_data)
             buffer = BytesIO()
             qr.save(buffer, format="PNG")
@@ -109,10 +155,12 @@ def verify_subscription_payment(request):
 
             subscription.save()
 
-            # Send confirmation email with QR attachment
             email = EmailMessage(
-                subject="🎫 CineHub Subscription Confirmed",
-                body=f"Hi {subscription.full_name},\n\nYour {subscription.subscription_type} subscription is now active!\n\nThanks for choosing CineHub.",
+                subject=_("🎫 CineHub Subscription Confirmed"),
+                body=_("Hi %(name)s,\n\nYour %(plan)s subscription is now active!\n\nThanks for choosing CineHub.") % {
+                    'name': subscription.full_name,
+                    'plan': subscription.subscription_type
+                },
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[subscription.email],
             )
@@ -122,9 +170,9 @@ def verify_subscription_payment(request):
 
             return redirect(f'/streaming/thankyou/?tx_ref={tx_ref}')
         else:
-            return HttpResponse("Payment not successful.")
+            return HttpResponse(_("Payment not successful."))
     else:
-        return HttpResponse("Payment verification failed.")
+        return HttpResponse(_("Payment verification failed."))
 
 def subscription_thankyou(request):
     tx_ref = request.GET.get('tx_ref')
@@ -134,13 +182,6 @@ def subscription_thankyou(request):
 # ---------------------------
 # User Authentication Views
 # ---------------------------
-class CustomUserSignupForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    plan = forms.ChoiceField(choices=[('monthly', 'Monthly'), ('annual', 'Annual')])
-    class Meta:
-        model = User
-        fields = ("username", "email", "password1", "password2", "plan")
-
 def user_signup(request):
     if request.method == 'POST':
         form = CustomUserSignupForm(request.POST)
@@ -156,18 +197,25 @@ def user_signup(request):
             amount = 500 if plan == 'monthly' else 5000
             tx_ref = f"sub-{uuid.uuid4()}"
 
-            # Create subscription & transaction
             StreamingSubscription.objects.create(
-                user=user, full_name=username, email=email,
-                subscription_type=plan, chapa_tx_ref=tx_ref,
-                amount=amount, is_paid=False
+                user=user,
+                full_name=username,
+                email=email,
+                subscription_type=plan,
+                chapa_tx_ref=tx_ref,
+                amount=amount,
+                is_paid=False
             )
             Transaction.objects.create(
-                user=user, tx_ref=tx_ref, amount=amount,
-                email=email, first_name=username, last_name='', status='initiated'
+                user=user,
+                tx_ref=tx_ref,
+                amount=amount,
+                email=email,
+                first_name=username,
+                last_name='',
+                status='initiated'
             )
 
-            # Initialize Chapa payment
             callback_url = request.build_absolute_uri(reverse('streaming:verify_subscription_payment'))
             chapa_payload = {
                 "amount": str(amount),
@@ -178,20 +226,24 @@ def user_signup(request):
                 "tx_ref": tx_ref,
                 "callback_url": callback_url,
                 "return_url": f"{callback_url}?tx_ref={tx_ref}",
-                "customization[title]": "Streaming Subscription",
-                "customization[description]": f"{plan.capitalize()} subscription for streaming access",
+                "customization[title]": str(_("Streaming Subscription")),
+                "customization[description]": str(_("%(plan)s subscription for streaming access") % {'plan': plan.capitalize()}),
             }
+
             headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
             response = requests.post(f"{CHAPA_BASE_URL}/transaction/initialize", json=chapa_payload, headers=headers)
             response_data = response.json()
+
             if response.status_code == 200 and response_data.get('status') == 'success':
                 return redirect(response_data['data']['checkout_url'])
             else:
-                messages.error(request, f"Failed to initialize payment: {response_data}")
+                messages.error(request, _("Failed to initialize payment: %(response)s") % {'response': response_data})
                 return redirect('streaming:signup')
     else:
         form = CustomUserSignupForm()
+
     return render(request, 'streaming/user_signup.html', {'form': form})
+
 
 def user_login(request):
     if request.method == 'POST':
@@ -202,7 +254,7 @@ def user_login(request):
             login(request, user)
             return redirect('home')
         else:
-            messages.error(request, 'Invalid credentials.')
+            messages.error(request, _('Invalid credentials.'))
     return render(request, 'streaming/user_login.html')
 
 def user_logout(request):
@@ -228,31 +280,10 @@ def streaming_home(request):
             content.signed_url = content.video_file.url if content.video_file else ""
     return render(request, 'streaming/streaming_home.html', {'contents': contents})
 
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from .models import StreamingContent, StreamingSubscription, StreamViewLog
-
-import os
-import json
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.utils import timezone
-from django.db.models import F, Sum
-from django.conf import settings
-
-from .models import StreamingContent, StreamViewLog, StreamingSubscription, UserProfile
-from .forms import ProfileUpdateForm
-from .utils import generate_signed_url
-
 # ------------------- Watch Video -------------------
 @login_required
 def watch_video(request, content_id):
     content = get_object_or_404(StreamingContent, id=content_id)
-
     subscription = StreamingSubscription.objects.filter(
         user=request.user,
         is_paid=True,
@@ -261,7 +292,6 @@ def watch_video(request, content_id):
     if not subscription:
         return redirect('streaming:create_subscription')
 
-    # Check if HLS exists
     hls_dir = os.path.join(settings.MEDIA_ROOT, 'hls', str(content.id))
     master_m3u8 = os.path.join(hls_dir, 'master.m3u8')
     is_hls = os.path.exists(master_m3u8)
@@ -284,7 +314,6 @@ def watch_video(request, content_id):
     }
     return render(request, 'streaming/watch_video.html', context)
 
-
 # ------------------- Report Watch Time -------------------
 @csrf_exempt
 @require_POST
@@ -293,7 +322,7 @@ def report_watch_time(request, content_id):
     try:
         payload = json.loads(request.body.decode('utf-8') or '{}')
     except (json.JSONDecodeError, UnicodeDecodeError):
-        return HttpResponseBadRequest("Invalid JSON")
+        return HttpResponseBadRequest(_("Invalid JSON"))
 
     event = payload.get('event')
     delta = payload.get('watched_seconds_delta')
@@ -346,16 +375,30 @@ def report_watch_time(request, content_id):
         'completion_rate': float(content.completion_rate),
     })
 
-
 # ------------------- User Profile -------------------
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils.translation import gettext_lazy as _
+from .models import UserProfile, StreamViewLog
+from .forms import ProfileUpdateForm
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils.translation import gettext_lazy as _
+from .models import UserProfile, StreamViewLog
+from .forms import ProfileUpdateForm
+
 @login_required
 def user_profile(request):
+    # Get or create the user profile
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
+    # Get streaming watch logs
     logs = StreamViewLog.objects.filter(user=request.user).select_related('content').order_by('-last_viewed')
 
     watch_history = []
     total_watch_time = 0
+
     for log in logs:
         minutes = log.watch_time_seconds // 60
         total_watch_time += minutes
@@ -364,16 +407,17 @@ def user_profile(request):
             'watch_date': log.last_viewed,
             'duration_watched': minutes,
             'completion_rate': log.content.completion_rate,
-            'country': log.country.name if log.country else 'Unknown'
+            # 'country' removed
         })
 
     total_videos = len(watch_history)
 
+    # Handle profile update form
     if request.method == "POST":
         form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
-            return redirect('user_profile')
+            return redirect('streaming:user_profile')
     else:
         form = ProfileUpdateForm(instance=profile)
 
@@ -384,4 +428,81 @@ def user_profile(request):
         'total_videos': total_videos,
         'total_watch_time': total_watch_time,
     }
+
     return render(request, 'streaming/profile.html', context)
+
+# ------------------- Admin Analytics -------------------
+@staff_member_required
+def streaming_analytics(request):
+    content_stats = (
+        StreamViewLog.objects
+        .select_related('content', 'user', 'country')
+        .values('content__title')
+        .annotate(
+            total_views=Sum('views'),
+            unique_viewers=Count('user', distinct=True),
+            total_watch_time=Sum('watch_time_seconds'),
+            completion_rate=F('content__completion_rate')
+        )
+        .order_by('-total_views')
+    )
+
+    total_views = StreamViewLog.objects.aggregate(total=Sum('views'))['total'] or 0
+    total_unique_viewers = StreamViewLog.objects.values('user').distinct().count()
+    total_watch_time_seconds = StreamViewLog.objects.aggregate(total=Sum('watch_time_seconds'))['total'] or 0
+
+    country_stats = (
+        StreamViewLog.objects
+        .values('country__name')
+        .annotate(
+            total_views=Sum('views'),
+            unique_viewers=Count('user', distinct=True),
+        )
+        .order_by('-total_views')
+    )
+
+    context = {
+        'content_stats': content_stats,
+        'total_views': total_views,
+        'total_unique_viewers': total_unique_viewers,
+        'total_watch_time_minutes': total_watch_time_seconds // 60,
+        'country_stats': country_stats
+    }
+
+    return render(request, "streaming/analytics.html", context)
+
+
+@staff_member_required
+def export_analytics_csv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="streaming_analytics.csv"'
+
+    import csv
+    writer = csv.writer(response)
+    writer.writerow([
+        _('Content'), _('Total Views'), _('Unique Viewers'),
+        _('Total Watch Time (mins)'), _('Completion Rate (%)')
+    ])
+
+    content_stats = (
+        StreamViewLog.objects
+        .select_related('content', 'user')
+        .values('content__title', 'content__completion_rate')
+        .annotate(
+            total_views=Sum('views'),
+            unique_viewers=Count('user', distinct=True),
+            total_watch_time=Sum('watch_time_seconds')
+        )
+        .order_by('-total_views')
+    )
+
+    for stat in content_stats:
+        writer.writerow([
+            stat['content__title'],
+            stat['total_views'] or 0,
+            stat['unique_viewers'] or 0,
+            (stat['total_watch_time'] or 0) // 60,
+            stat['content__completion_rate'] or 0
+        ])
+
+    return response

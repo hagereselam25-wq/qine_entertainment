@@ -1,15 +1,16 @@
 {% extends "base.html" %}
+{% load i18n %}
 {% block content %}
 <h2>{{ content.title }}</h2>
-<p>Category: {{ content.get_category_display }}</p>
-<p>Duration: {{ content.duration_minutes }} minutes</p>
+<p>{% trans "Category:" %} {{ content.get_category_display }}</p>
+<p>{% trans "Duration:" %} {{ content.duration_minutes }} {% trans "minutes" %}</p>
 
 {% if video_url %}
   <video id="video-player" width="800" height="450" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false;" preload="metadata" playsinline>
     {% if not is_hls %}
       <source src="{{ video_url }}" type="video/mp4">
     {% endif %}
-    Your browser does not support the video tag.
+    {% trans "Your browser does not support the video tag." %}
   </video>
 
   {% if is_hls %}
@@ -87,6 +88,6 @@
 </script>
 
 {% else %}
-  <p>No video available.</p>
+  <p>{% trans "No video available." %}</p>
 {% endif %}
 {% endblock %}

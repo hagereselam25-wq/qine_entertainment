@@ -1,0 +1,85 @@
+
+    BBBB BBBB BBBBBB
+XXXXXXXXX XXXXX
+XXXXX XXXXXXXXXX
+XXXXXX
+    XXXXX XXXXXXXXXXXXXXXX
+    XXXXXXX gettext(u'Movies') XXXXXXXX
+   XXXXXXX
+        XXXX X
+            XXXXXXXXXXXXXXXXX XXXXXXXX
+            XXXXXX XXXXXX
+            XXXXXXXXXXXX XXXXXX XXXX XXXXXXX XXXXXXX XXXXXXXX XXXXXXXXXXX
+            XXXXXXXXXXX XXXXXXX
+            XXXXXXXX XXXXX
+        X
+
+        XX X
+            XXXXXXXXXXX XXXXX
+            XXXXXXXX XX
+        X
+
+        XX X
+            XXXXXXXXXXXXXX XXXXX
+            XXXXXXXXXXX XXXXXXXX
+            XXXXXXXX XXXXX
+            XXXXXXXXXXXXXX XXXXX
+            XXXXXXXXXXX XXXXXXXXXX XXXXX
+        X
+
+        XXXXXXXX X
+            XXXXXXXXXXX XXXXXXXX
+        X
+
+        X X
+            XXXXXX XXXXX
+            XXXXXXXXXXXXXXXX XXXXX
+            XXXXXXXXXXXX XXXXX
+            XXXXXXXX XXXXXXXXXXXXX
+            XXXXXXXXXXX XXXXX
+        X
+
+        XXXXXXX X
+            XXXXXX XXXXXXXX
+        X
+
+        XXX X
+            XXXXXXXXXX XXXXXX
+            XXXXXXXXXXXXXX XXXXX
+            XXXXXXXXXXXXXX XXXXX
+        X
+
+        XXXXXXX XXXXX X
+            XXXXXXXXXX XXXXX
+            XXXXXXX XXXXXX
+            XXXXXXXXXXX XXXXX
+            XXXXXXXXXXXXXX XXXXX
+        X
+    XXXXXXXX
+XXXXXXX
+XXXXXX
+XXXX gettext(u'Now Showing') XXXXX
+XXXX
+BBB BBBBB BB BBBBBB
+XXXX
+    XXXX X XXXXX
+
+    BB BBBBBBBBBBBB
+        XXXX XXXXXX XXXXX  gettext(u'poster') X XXXXXXXXXXX XX
+    BBBBB
+
+    BB BBBBBBBBBBBBB
+        XXXXXX XXXXXXXXXXX XXXXXXXXXXXX XXXXXXXXX
+            XXXXXXX XXXXXX XXXXXXXXXXXXXXXXX
+             gettext(u'Your browser does not support the video tag.') 
+        XXXXXXXX
+    BBBBB
+
+    XXXX
+    XX XXXXXXBBB BBBBBBBBBBBBBBBB BBBBBBBBXX gettext(u'Book Seats') XXXX
+XXXXX
+BBBBBB
+XXXXX
+
+XXXXXXX
+XXXXXXX

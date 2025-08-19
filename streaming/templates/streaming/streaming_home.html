@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
 <style>
@@ -60,7 +61,8 @@
   }
 </style>
 
-<h1 style="text-align: center; color: white; margin-bottom: 30px;">Streaming Content</h1>
+<h1 style="text-align: center; color: white; margin-bottom: 30px;">{% trans "Streaming Content" %}</h1>
+
 <div class="streaming-list">
   {% if contents %}
     <ul>
@@ -71,20 +73,22 @@
           {% else %}
             <div style="height: 150px; background-color: #444; border-radius: 10px; margin-bottom: 10px;"></div>
           {% endif %}
-          <h3>{{ content.title }}</h3>
-          <p>Category: {{ content.get_category_display }}</p>
-          <p>Release Date: {{ content.release_date }}</p>
-          <p>Duration: {{ content.duration_minutes }} minutes</p>
-     {% if content.video_file or content.video_url %}
-    <a href="{% url 'streaming:watch_video' content.id %}" class="watch-btn">Watch Now</a>
-{% else %}
-    <span style="color: #888;">No video available</span>
-{% endif %}
 
+          <h3>{{ content.title }}</h3>
+          <p>{% blocktrans %}Category: {{ content.get_category_display }}{% endblocktrans %}</p>
+          <p>{% blocktrans %}Release Date: {{ content.release_date }}{% endblocktrans %}</p>
+          <p>{% blocktrans %}Duration: {{ content.duration_minutes }} minutes{% endblocktrans %}</p>
+
+          {% if content.video_file or content.video_url %}
+            <a href="{% url 'streaming:watch_video' content.id %}" class="watch-btn">{% trans "Watch Now" %}</a>
+          {% else %}
+            <span style="color: #888;">{% trans "No video available" %}</span>
+          {% endif %}
+        </li>
       {% endfor %}
     </ul>
   {% else %}
-    <p style="color: #ccc; text-align: center;">No streaming content available yet.</p>
+    <p style="color: #ccc; text-align: center;">{% trans "No streaming content available yet." %}</p>
   {% endif %}
 </div>
 {% endblock %}

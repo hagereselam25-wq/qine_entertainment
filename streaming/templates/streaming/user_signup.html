@@ -1,16 +1,16 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign Up - Streaming Subscription</title>
+  <title>{% trans "Sign Up - Streaming Subscription" %}</title>
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-  <h1>Sign Up for Streaming Subscription</h1>
+  <h1>{% trans "Sign Up for Streaming Subscription" %}</h1>
 
-  <p><a href="{% url 'home' %}">← Back to Home</a></p>
+  <p><a href="{% url 'home' %}">← {% trans "Back to Home" %}</a></p>
 
   {% if messages %}
     <ul class="messages">
@@ -50,15 +50,15 @@
     </div>
 
     <div>
-      <label for="id_plan">Subscription Plan</label><br>
+      <label for="id_plan">{% trans "Subscription Plan" %}</label><br>
       <select name="plan" id="id_plan" required>
-        <option value="monthly">Monthly - 500 ETB</option>
-        <option value="annual">Annual - 5000 ETB</option>
+        <option value="monthly">{% trans "Monthly - 500 ETB" %}</option>
+        <option value="annual">{% trans "Annual - 5000 ETB" %}</option>
       </select>
       {{ form.plan.errors }}
     </div>
 
-    <button type="submit">Sign Up</button>
+    <button type="submit">{% trans "Sign Up" %}</button>
   </form>
 </body>
 </html>

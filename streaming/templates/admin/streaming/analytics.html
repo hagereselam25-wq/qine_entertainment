@@ -1,17 +1,75 @@
-{% extends "admin/change_list.html" %}
-{% block content %}
-<h1>📊 Streaming Analytics</h1>
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% load i18n %}
 
-<table class="table">
-    <tr><th>Total Plays</th><td>{{ stats.total_views }}</td></tr>
-    <tr><th>Unique Viewers</th><td>{{ stats.unique_viewers }}</td></tr>
-    <tr><th>Total Watch Time</th><td>{{ stats.total_watch_time_hours|floatformat:2 }} hours</td></tr>
-    <tr><th>Avg Watch Time / View</th><td>{{ stats.avg_watch_time_per_view|floatformat:2 }} hrs</td></tr>
-    <tr><th>Completion Rate</th><td>{{ stats.completion_rate }}%</td></tr>
-    <tr><th>Top Regions</th><td>
-        {% for country, percent in stats.top_regions.items %}
-            {{ country }} ({{ percent }}%)<br>
-        {% endfor %}
-    </td></tr>
-</table>
+{% block title %}{% trans "Streaming Analytics" %}{% endblock %}
+
+{% block extrastyle %}
+<style>
+    body { background: #194876; }
+    .analytics-container { margin: 20px; padding: 25px; background: #fff; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    h1 { font-size: 24px; margin-bottom: 10px; color: #222; }
+    .summary, .country-breakdown { margin-bottom: 20px; }
+    .summary div, .country-breakdown div { margin-bottom: 5px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    table th, table td { padding: 12px 15px; border: 1px solid #e5e7eb; text-align: left; }
+    table th { background: #f3f4f6; font-weight: 600; }
+    table tr:nth-child(even) { background: #fafafa; }
+    .download-btn { display: inline-block; margin-top: 15px; padding: 10px 18px; background: #2563eb; color: white; text-decoration: none; font-size: 14px; font-weight: 600; border-radius: 6px; transition: background 0.2s ease-in-out; }
+    .download-btn:hover { background: #1d4ed8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+    <h1>📊 {% trans "Streaming Analytics" %}</h1>
+
+    <div class="summary">
+        <div>{% blocktrans %}Total Views: {{ total_views }}{% endblocktrans %}</div>
+        <div>{% blocktrans %}Unique Viewers: {{ total_unique_viewers }}{% endblocktrans %}</div>
+        <div>{% blocktrans %}Total Watch Time: {{ total_watch_time_minutes }} mins{% endblocktrans %}</div>
+    </div>
+
+    <div class="country-breakdown">
+        <strong>{% trans "Views by Country:" %}</strong>
+        {% if country_stats %}
+            <ul>
+                {% for country in country_stats %}
+                    <li>{% blocktrans %}{{ country.country__name|default:"Unknown" }} - {{ country.total_views|default:0 }} views ({{ country.unique_viewers|default:0 }} unique){% endblocktrans %}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>{% trans "No country data available." %}</p>
+        {% endif %}
+    </div>
+
+    <a href="{% url 'streaming:export_analytics_csv' %}" class="download-btn">{% trans "⬇️ Download CSV" %}</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>{% trans "Content" %}</th>
+                <th>{% trans "Total Views" %}</th>
+                <th>{% trans "Unique Viewers" %}</th>
+                <th>{% trans "Total Watch Time (mins)" %}</th>
+                <th>{% trans "Completion Rate (%)" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in content_stats %}
+            <tr>
+                <td>{{ stat.content__title }}</td>
+                <td>{{ stat.total_views|default:0 }}</td>
+                <td>{{ stat.unique_viewers|default:0 }}</td>
+                <td>{{ stat.total_watch_time|default:0|divisibleby:60 }}</td>
+                <td>{{ stat.completion_rate|default:0 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">{% trans "No analytics available yet." %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

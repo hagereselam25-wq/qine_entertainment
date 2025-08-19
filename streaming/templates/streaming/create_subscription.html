@@ -1,6 +1,6 @@
-<h2>Subscribe to Streaming</h2>
+<h2>{% trans "Subscribe to Streaming" %}</h2>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Proceed to Payment</button>
+    <button type="submit">{% trans "Proceed to Payment" %}</button>
 </form>

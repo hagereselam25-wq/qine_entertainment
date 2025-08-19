@@ -1,9 +1,12 @@
+{% load i18n %}
+
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}Cinema Streaming{% endblock %}</title>
+  <title>{% block title %}{% trans "Cinema Streaming" %}{% endblock %}</title>
   
   <!-- Google Fonts (optional) -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
@@ -56,23 +59,44 @@
       color: #999;
       border-top: 1px solid #333;
     }
+    /* Optional: Language switcher style */
+    .lang-switcher select {
+      background: #1f1f1f;
+      color: #f0f0f0;
+      border: 1px solid #333;
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin-left: 10px;
+    }
   </style>
-  
+
   {% block extra_head %}{% endblock %}
 </head>
 <body>
 
   <header>
-    <h1>Cinema Streaming</h1>
+    <h1>{% trans "Cinema Streaming" %}</h1>
     <nav>
-      <a href="{% url 'home' %}">Home</a>
-      <a href="{% url 'streaming:streaming_home' %}">Streaming</a>
+      <a href="{% url 'home' %}">{% trans "Home" %}</a>
+      <a href="{% url 'streaming:streaming_home' %}">{% trans "Streaming" %}</a>
+
       {% if user.is_authenticated %}
-        <a href="{% url 'streaming:logout' %}">Logout</a>
+        <a href="{% url 'streaming:logout' %}">{% trans "Logout" %}</a>
       {% else %}
-        <a href="{% url 'streaming:login' %}">Login</a>
-        <a href="{% url 'streaming:signup' %}">Sign Up</a>
+        <a href="{% url 'streaming:login' %}">{% trans "Login" %}</a>
+        <a href="{% url 'streaming:signup' %}">{% trans "Sign Up" %}</a>
       {% endif %}
+
+      <!-- Optional Language Switcher -->
+      <form action="{% url 'set_language' %}" method="post" class="lang-switcher" style="display:inline;">
+        {% csrf_token %}
+        <select name="language" onchange="this.form.submit()">
+          {% get_available_languages as LANGUAGES %}
+          {% for lang_code, lang_name in LANGUAGES %}
+            <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{{ lang_name }}</option>
+          {% endfor %}
+        </select>
+      </form>
     </nav>
   </header>
 
@@ -82,7 +106,7 @@
   </main>
 
   <footer>
-    &copy; {{ now|date:"Y" }} Cinema Streaming. All rights reserved.
+    &copy; {{ now|date:"Y" }} {% trans "Cinema Streaming. All rights reserved." %}
   </footer>
 
 </body>
