@@ -336,3 +336,37 @@ def admin_logout(request):
 def thank_you(request):
     reservation = Reservation.objects.filter(is_paid=True).last()
     return render(request, "reservations/thank_you.html", {"reservation": reservation})
+
+
+
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+
+def contact_view(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        feedback = request.POST.get("feedback")
+
+        if name and email and feedback:
+            # Send feedback email to host
+            send_mail(
+                subject=f"Feedback from {name}",
+                message=f"Sender: {name}\nEmail: {email}\n\nFeedback:\n{feedback}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_FROM_EMAIL],  # your host email
+                fail_silently=False,
+            )
+            # Pass a flag to trigger JS alert
+            return render(request, 'reservations/contact.html', {'success': True})
+        else:
+            messages.error(request, "Please fill in all fields.")
+
+    return render(request, 'reservations/contact.html')
+
+from django.shortcuts import render
+
+def about_view(request):
+    return render(request, 'reservations/about.html')

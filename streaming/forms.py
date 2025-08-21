@@ -48,3 +48,16 @@ class ProfileUpdateForm(forms.ModelForm):
             'profile_picture': _('Profile Picture'),
             'bio': _('Bio'),
         }
+
+
+# forms.py
+from django import forms
+from .models import StreamingRating
+
+class RatingForm(forms.ModelForm):
+    class Meta:
+        model = StreamingRating
+        fields = ['rating']
+        widgets = {
+            'rating': forms.NumberInput(attrs={'min': 1, 'max': 5})
+        }

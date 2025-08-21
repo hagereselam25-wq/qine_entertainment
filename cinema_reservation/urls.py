@@ -10,6 +10,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('reservations.urls')),  # Your reservation app routes
     path('streaming/', include('streaming.urls', namespace='streaming')),  # Streaming app routes
+
+    # ✅ Add Django i18n URLs for language switching
+    path('i18n/', include('django.conf.urls.i18n')),
 ]
 
 # Serve media files during development

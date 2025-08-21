@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load static i18n %}
 
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}{% trans "Cinema Streaming" %}{% endblock %}</title>
   
-  <!-- Google Fonts (optional) -->
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
   
   <!-- Basic CSS styling -->
@@ -27,6 +27,7 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.7);
+      position: relative;
     }
     header h1 {
       margin: 0;
@@ -59,7 +60,6 @@
       color: #999;
       border-top: 1px solid #333;
     }
-    /* Optional: Language switcher style */
     .lang-switcher select {
       background: #1f1f1f;
       color: #f0f0f0;
@@ -67,6 +67,12 @@
       padding: 5px 10px;
       border-radius: 5px;
       margin-left: 10px;
+    }
+    /* Google Translate dropdown positioning inside header */
+    #google_translate_element {
+      display: inline-block;
+      margin-left: 20px;
+      vertical-align: middle;
     }
   </style>
 
@@ -79,6 +85,8 @@
     <nav>
       <a href="{% url 'home' %}">{% trans "Home" %}</a>
       <a href="{% url 'streaming:streaming_home' %}">{% trans "Streaming" %}</a>
+      <a href="{% url 'about' %}">{% trans "About" %}</a>
+      <a href="{% url 'contact' %}">{% trans "Contact" %}</a>
 
       {% if user.is_authenticated %}
         <a href="{% url 'streaming:logout' %}">{% trans "Logout" %}</a>
@@ -87,7 +95,7 @@
         <a href="{% url 'streaming:signup' %}">{% trans "Sign Up" %}</a>
       {% endif %}
 
-      <!-- Optional Language Switcher -->
+      <!-- Language Switcher (Django) -->
       <form action="{% url 'set_language' %}" method="post" class="lang-switcher" style="display:inline;">
         {% csrf_token %}
         <select name="language" onchange="this.form.submit()">
@@ -97,17 +105,27 @@
           {% endfor %}
         </select>
       </form>
+
+      <!-- Google Translate -->
+      <div id="google_translate_element"></div>
     </nav>
   </header>
 
   <main>
-    {% block content %}
-    {% endblock %}
+    {% block content %}{% endblock %}
   </main>
 
   <footer>
     &copy; {{ now|date:"Y" }} {% trans "Cinema Streaming. All rights reserved." %}
   </footer>
+
+  <!-- Google Translate Script -->
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 </body>
 </html>

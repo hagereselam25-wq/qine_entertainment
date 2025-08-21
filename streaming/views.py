@@ -281,6 +281,26 @@ def streaming_home(request):
     return render(request, 'streaming/streaming_home.html', {'contents': contents})
 
 # ------------------- Watch Video -------------------
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+from django.db.models import F, Avg
+import os
+
+from .models import StreamingContent, StreamingSubscription, StreamViewLog, StreamingRating
+from .utils import generate_signed_url
+from .forms import RatingForm  # We'll use a simple form for rating submission
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.db.models import Avg
+import os
+from .models import StreamingContent, StreamingSubscription, StreamViewLog, StreamingRating
+from .forms import RatingForm
+from .utils import generate_signed_url
+from django.conf import settings
+
 @login_required
 def watch_video(request, content_id):
     content = get_object_or_404(StreamingContent, id=content_id)
@@ -292,25 +312,50 @@ def watch_video(request, content_id):
     if not subscription:
         return redirect('streaming:create_subscription')
 
+    # HLS / video URL handling
     hls_dir = os.path.join(settings.MEDIA_ROOT, 'hls', str(content.id))
     master_m3u8 = os.path.join(hls_dir, 'master.m3u8')
     is_hls = os.path.exists(master_m3u8)
     video_file_url = content.video_file.url if not is_hls else ''
-
     base_url = request.build_absolute_uri(f"/media/hls/{content.id}/master.m3u8")
     signed_url = generate_signed_url(video_id=str(content.id), base_url=base_url) if is_hls else video_file_url
 
+    # Log streaming
     log, created = StreamViewLog.objects.get_or_create(user=request.user, content=content)
     if created:
         content.unique_viewers += 1
     content.total_plays += 1
     content.save(update_fields=['unique_viewers', 'total_plays'])
 
+    # Handle rating submission
+    if request.method == 'POST':
+        form = RatingForm(request.POST)
+        if form.is_valid():
+            rating_value = form.cleaned_data['rating']
+            rating_obj, _ = StreamingRating.objects.update_or_create(
+                user=request.user,
+                content=content,
+                defaults={'rating': rating_value}
+            )
+            # Recalculate average rating
+            avg_rating = StreamingRating.objects.filter(content=content).aggregate(avg=Avg('rating'))['avg'] or 0
+            content.average_rating = round(avg_rating, 2)
+            content.save(update_fields=['average_rating'])
+            return redirect('streaming:watch_video', content_id=content.id)
+    else:
+        try:
+            existing_rating = StreamingRating.objects.get(user=request.user, content=content)
+            form = RatingForm(initial={'rating': existing_rating.rating})
+        except StreamingRating.DoesNotExist:
+            form = RatingForm()
+
     context = {
         'content': content,
         'video_url': signed_url,
         'is_hls': is_hls,
-        'log': log
+        'log': log,
+        'rating_form': form,
+        'average_rating': content.average_rating or 0,
     }
     return render(request, 'streaming/watch_video.html', context)
 
@@ -506,3 +551,27 @@ def export_analytics_csv(request):
         ])
 
     return response
+
+
+# views.py
+@login_required
+@require_POST
+def rate_video(request, content_id):
+    content = get_object_or_404(StreamingContent, id=content_id)
+    form = RatingForm(request.POST)
+    if form.is_valid():
+        rating_value = form.cleaned_data['rating']
+        rating_obj, created = StreamingRating.objects.update_or_create(
+            user=request.user,
+            content=content,
+            defaults={'rating': rating_value}
+        )
+
+        # Recalculate average rating
+        agg = content.ratings.aggregate(avg=models.Avg('rating'), total=models.Count('id'))
+        content.avg_rating = agg['avg'] or 0
+        content.total_ratings = agg['total'] or 0
+        content.save(update_fields=['avg_rating', 'total_ratings'])
+
+        return JsonResponse({'ok': True, 'avg_rating': content.avg_rating, 'total_ratings': content.total_ratings})
+    return JsonResponse({'ok': False, 'errors': form.errors}, status=400)

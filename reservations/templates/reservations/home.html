@@ -1,6 +1,8 @@
 {% load static i18n %}
+
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,13 +10,37 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <style>
+    /* Google Translate dropdown styling */
+    #google_translate_element {
+      display: inline-block;
+      margin-left: 15px;
+      vertical-align: middle;
+    }
+    /* Optional: hide Google Translate banner */
+    .goog-te-banner-frame.skiptranslate { display: none !important; } 
+    body { top: 0px !important; }
+  </style>
 </head>
 <body>
 <header>
+  <form action="{% url 'set_language' %}" method="post" class="lang-switcher" style="display:inline;">
+        {% csrf_token %}
+        <select name="language" onchange="this.form.submit()">
+          {% get_available_languages as LANGUAGES %}
+          {% for lang_code, lang_name in LANGUAGES %}
+            <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>{{ lang_name }}</option>
+          {% endfor %}
+        </select>
+  </form>
+
   <h1>{% trans "Cinema Ticket Reservation" %}</h1>
   <nav class="main-nav">
     <a href="{% url 'home' %}">{% trans "Home" %}</a>
     <a href="{% url 'streaming:streaming_home' %}">{% trans "Streaming" %}</a>
+    <a href="{% url 'about' %}">{% trans "About" %}</a>
+    <a href="{% url 'contact' %}">{% trans "Contact" %}</a>
+
     {% if user.is_authenticated %}
       <div class="user-profile-header">
         {% if user.userprofile.profile_picture %}
@@ -30,6 +56,9 @@
       <a href="{% url 'streaming:login' %}">{% trans "Login" %}</a>
       <a href="{% url 'streaming:signup' %}">{% trans "Sign Up" %}</a>
     {% endif %}
+
+    <!-- Google Translate Dropdown -->
+    <div id="google_translate_element"></div>
   </nav>
 </header>
 
@@ -115,7 +144,7 @@
             {% if user.is_authenticated %}
               <a class="book-btn" href="{{ movie.stream_url }}">{% trans "Stream" %}</a>
             {% else %}
-              <a class="book-btn" href="{% url 'streaming:login' %}">{% trans "Login to Stream" %}</a>
+              <a class="book-btn" href="{% url 'streaming:signup' %}">{% trans "Sign Up to Stream" %}</a>
             {% endif %}
           </div>
         </div>
@@ -125,5 +154,14 @@
 </section>
 
 <script src="{% static 'js/scripts.js' %}"></script>
+
+<!-- Google Translate Script -->
+<script type="text/javascript">
+  function googleTranslateElementInit() {
+    new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+  }
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
 </body>
 </html>

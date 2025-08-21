@@ -5,6 +5,7 @@ from django.urls import path
 from django.urls import path
 from . import views 
 from .views import user_profile
+from django.urls import path, include
 
 app_name = 'streaming'
 
@@ -21,6 +22,10 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
     path('profile/', user_profile, name='user_profile'),
+
+    path('i18n/', include('django.conf.urls.i18n')), 
+    path('rate/<int:content_id>/', views.rate_video, name='rate_video'),
+
 
     path('admin/streaming/streaminganalytics/', views.streaming_analytics, name='streaming_analytics'),
     path('admin/streaming/streaminganalytics/export_csv/', views.export_analytics_csv, name='export_analytics_csv'),

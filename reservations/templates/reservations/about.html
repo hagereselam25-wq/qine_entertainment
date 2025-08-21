@@ -1,0 +1,49 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "About Us" %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .about-container {
+            max-width: 800px;
+            margin: 50px auto;
+            background: #1f1f1f;
+            padding: 30px;
+            border-radius: 10px;
+            color: #f0f0f0;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #e50914;
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        .back-home {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #f0f0f0;
+            background-color: #e50914;
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .back-home:hover {
+            background-color: #b0060f;
+        }
+    </style>
+</head>
+<body>
+    <div class="about-container">
+        <a href="{% url 'home' %}" class="back-home">{% trans "← Home" %}</a>
+        <h1>{% trans "About Cinema Streaming" %}</h1>
+        <p>{% trans "Welcome to Cinema Streaming! Our platform lets you reserve movie tickets and stream movies online." %}</p>
+        <p>{% trans "We aim to provide the best cinema experience at home or on the go. Enjoy the latest movies with high-quality streaming and easy seat reservation." %}</p>
+        <p>{% trans "Our mission is to bring entertainment closer to you and make movie watching seamless and enjoyable." %}</p>
+    </div>
+</body>
+</html>

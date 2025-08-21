@@ -50,6 +50,9 @@ class StreamingSubscription(models.Model):
 
 
 # -------------------- Streaming Content --------------------
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
 class StreamingContent(models.Model):
     CATEGORY_CHOICES = [
         ('movie', _('Movie')),
@@ -61,23 +64,63 @@ class StreamingContent(models.Model):
 
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"))
-    category = models.CharField(_("Category"), max_length=20, choices=CATEGORY_CHOICES, default='movie')
+    category = models.CharField(
+        _("Category"),
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        default='movie'
+    )
     thumbnail = models.ImageField(_("Thumbnail"), upload_to='thumbnails/')
-    video_file = models.FileField(_("Upload Video"), upload_to='secure_videos/', blank=True, null=True, help_text=_("Upload video securely"))
-    video_url = models.URLField(_("Video URL"), blank=True, null=True, help_text=_("Optional external video URL"))
-    hls_folder = models.CharField(_("HLS Folder"), max_length=255, blank=True, null=True, help_text=_("Path to generated HLS folder"))
-    price_per_view = models.DecimalField(_("Price per View"), max_digits=8, decimal_places=2, default=0.00)
-    duration_minutes = models.PositiveIntegerField(_("Duration (minutes)"), help_text=_("Total duration in minutes"))
+    video_file = models.FileField(
+        _("Upload Video"),
+        upload_to='secure_videos/',
+        blank=True,
+        null=True,
+        help_text=_("Upload video securely")
+    )
+    video_url = models.URLField(
+        _("Video URL"),
+        blank=True,
+        null=True,
+        help_text=_("Optional external video URL")
+    )
+    hls_folder = models.CharField(
+        _("HLS Folder"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Path to generated HLS folder")
+    )
+    price_per_view = models.DecimalField(
+        _("Price per View"),
+        max_digits=8,
+        decimal_places=2,
+        default=0.00
+    )
+    duration_minutes = models.PositiveIntegerField(
+        _("Duration (minutes)"),
+        help_text=_("Total duration in minutes")
+    )
     release_date = models.DateField(_("Release Date"))
     created_at = models.DateTimeField(auto_now_add=True)
 
     # Analytics
     total_plays = models.PositiveIntegerField(_("Total Plays"), default=0)
     unique_viewers = models.PositiveIntegerField(_("Unique Viewers"), default=0)
-    total_watch_time_seconds = models.PositiveIntegerField(_("Total Watch Time (seconds)"), default=0)
-    completion_rate = models.DecimalField(_("Completion Rate"), max_digits=5, decimal_places=2, default=0.00)
+    total_watch_time_seconds = models.PositiveIntegerField(
+        _("Total Watch Time (seconds)"),
+        default=0
+    )
+    completion_rate = models.DecimalField(
+        _("Completion Rate"),
+        max_digits=5,
+        decimal_places=2,
+        default=0.00
+    )
+    average_rating = models.FloatField(_("Average Rating"), default=0.0)
+    total_ratings = models.PositiveIntegerField(_("Total Ratings"), default=0)
 
-    def str(self):
+    def __str__(self):
         return self.title
 
 @receiver(post_save, sender=StreamingContent)
@@ -139,3 +182,18 @@ class StreamingAnalytics(models.Model):
         managed = False  # No database table
         verbose_name = _("Streaming Analytics")
         verbose_name_plural = _("Streaming Analytics")
+
+
+# models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class StreamingRating(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.ForeignKey('StreamingContent', on_delete=models.CASCADE, related_name='ratings')
+    rating = models.PositiveSmallIntegerField()  # 1-5
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'content')  # One rating per user per video

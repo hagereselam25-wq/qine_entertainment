@@ -9,18 +9,28 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import StreamingContent, StreamingSubscription, StreamViewLog, StreamingAnalytics
 
-# ------------------- Streaming Content Admin -------------------
+# ------------------- Streaming Content Admin ------------------- 
+from django.contrib import admin
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+from django.urls import path
+from django.http import HttpResponse
+import csv
+from django.db.models import Sum
+from .models import StreamingContent, StreamViewLog
+
 @admin.register(StreamingContent)
 class StreamingContentAdmin(admin.ModelAdmin):
     list_display = (
         'title', 'category', 'total_plays', 'unique_viewers',
+        'average_rating',  # <-- Added Average Rating column
         'total_watch_time_minutes_display', 'completion_rate', 'release_date',
         'hls_folder', 'download_analytics_csv'
     )
     search_fields = ('title',)
     list_filter = ('category', 'release_date')
     ordering = ('-release_date',)
-    readonly_fields = ('hls_folder', 'total_watch_time_minutes_display')
+    readonly_fields = ('hls_folder', 'total_watch_time_minutes_display', 'average_rating')
 
     def total_watch_time_minutes_display(self, obj):
         total_seconds = StreamViewLog.objects.filter(content=obj).aggregate(
@@ -48,20 +58,40 @@ class StreamingContentAdmin(admin.ModelAdmin):
 
     def download_csv_view(self, request, content_id):
         content = self.get_object(request, content_id)
-        logs = StreamViewLog.objects.filter(content=content)
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{content.title}_analytics.csv"'
         writer = csv.writer(response)
-        writer.writerow([_('User'), _('Views'), _('Watch Time (min)'), _('Completion Rate'), _('Country')])
-        for log in logs:
-            writer.writerow([
-                log.user.username,
-                log.views,
-                (log.watch_time_seconds or 0) // 60,
-                log.content.completion_rate,
-                log.country.name if log.country else _('Unknown')
-            ])
+
+        # ✅ Write aggregated headers
+        writer.writerow([
+            _('Title'),
+            _('Category'),
+            _('Total Plays'),
+            _('Unique Viewers'),
+            _('Average Rating'),
+            _('Total Watch Time (min)'),
+            _('Completion Rate'),
+            _('Release Date')
+        ])
+
+        # ✅ Write single aggregated row from StreamingContent
+        total_watch_time_minutes = StreamViewLog.objects.filter(content=content).aggregate(
+            total=Sum('watch_time_seconds')
+        )['total'] or 0
+
+        writer.writerow([
+            content.title,
+            content.category,
+            content.total_plays,
+            content.unique_viewers,
+            round(content.average_rating or 0, 2),
+            total_watch_time_minutes // 60,
+            f"{content.completion_rate:.2f}",
+            content.release_date.strftime('%Y-%m-%d') if content.release_date else ''
+        ])
+
         return response
+
 
 # -------------------- Streaming Subscription Admin --------------------
 @admin.register(StreamingSubscription)
@@ -94,6 +124,13 @@ class StreamViewLogAdmin(admin.ModelAdmin):
     country_display.short_description = _('Country')
 
 # ------------------- Streaming Analytics Admin -------------------
+from django.contrib import admin
+from django.shortcuts import render
+from django.db.models import Sum, Count, Avg
+from django.utils.translation import gettext_lazy as _
+
+from .models import StreamingAnalytics, StreamViewLog, StreamingContent, StreamingRating
+
 @admin.register(StreamingAnalytics)
 class StreamingAnalyticsAdmin(admin.ModelAdmin):
     change_list_template = "admin/streaming/analytics.html"  # Your template
@@ -117,12 +154,29 @@ class StreamingAnalyticsAdmin(admin.ModelAdmin):
             percent = round(item['count'] / total_region_count * 100, 2)
             top_regions[country] = percent
 
+        # ------------------------
+        # Rating Analytics
+        # ------------------------
+        rating_data = StreamingContent.objects.annotate(
+            avg_rating=Avg('ratings__rating'),
+            total_ratings=Count('ratings')
+        ).order_by('-avg_rating')[:10]  # top 10 by avg_rating
+
+        ratings_stats = []
+        for content in rating_data:
+            ratings_stats.append({
+                'title': content.title,
+                'avg_rating': round(content.avg_rating or 0, 2),
+                'total_ratings': content.total_ratings,
+            })
+
         stats = {
             'total_views': total_views,
             'unique_viewers': unique_viewers,
             'total_watch_time_hours': round(total_watch_time_seconds / 3600, 2),
             'avg_watch_time_per_view_minutes': round(avg_watch_time_per_view / 60, 2),
-            'top_regions': top_regions
+            'top_regions': top_regions,
+            'ratings_stats': ratings_stats,  # Add rating analytics
         }
 
         extra_context = extra_context or {}
