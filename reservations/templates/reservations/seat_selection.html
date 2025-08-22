@@ -1,153 +1,59 @@
 {% load i18n %}
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>{% trans "Seat Selection" %}</title>
-    <style>
-        /* Your existing styles remain unchanged */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 30px;
-            text-align: center;
-            background-color: #f9f9f9;
-        }
-
-        .form-container {
-            background: #ffffff;
-            padding: 25px 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: inline-block;
-            max-width: 500px;
-            width: 100%;
-            margin-top: 30px;
-        }
-
-        .form-container h2 {
-            color: #2c3e50;
-        }
-
-        .form-container label {
-            font-size: 16px;
-            color: #555;
-            margin: 8px 0;
-        }
-
-        .form-container input, .form-container select, .form-container button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        .form-container button {
-            background-color: #3498db;
-            color: white;
-            cursor: pointer;
-        }
-
-        .form-container button:hover {
-            background-color: #2980b9;
-        }
-
-        .seats-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .seat {
-            width: 50px;
-            height: 50px;
-            margin: 5px;
-            background-color: #f39c12;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            color: white;
-            border-radius: 5px;
-        }
-
-        .seat.booked {
-            background-color: #e74c3c;
-            cursor: not-allowed;
-        }
-
-        /* Popup styles */
-        .popup {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            font-size: 20px;
-            text-align: center;
-            padding-top: 200px;
-        }
-
-        .popup .popup-content {
-            background-color: #333;
-            padding: 20px;
-            border-radius: 5px;
-        }
-
-        .popup button {
-            padding: 10px 20px;
-            background-color: #e67e22;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .popup button:hover {
-            background-color: #d35400;
-        }
-
-        .error-message {
-            color: #e74c3c;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-    </style>
+    <!-- Link to your global CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body>
+<body class="seat-selection-body">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">Cinema</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">{% trans "Login" %}</a></li>
+        </ul>
+    </nav>
+
     <h1>{% blocktrans with title=movie.title %}Seat Selection for {{ title }}{% endblocktrans %}</h1>
 
-    <div class="form-container">
-        <form method="POST">
-            {% csrf_token %}
+    <div class="seat-selection-form">
+    <form method="POST">
+        {% csrf_token %}
+        <div>
             <label for="name">{% trans "Your Name:" %}</label>
             <input type="text" id="name" name="name" required>
-            
+        </div>
+
+        <div>
             <label for="email">{% trans "Your Email:" %}</label>
             <input type="email" id="email" name="email" required>
-            
+        </div>
+
+        <div>
             <label for="seat_id">{% trans "Select Seat:" %}</label>
             <select name="seat_id" id="seat_id" required>
                 {% for seat in seats %}
                     <option value="{{ seat.id }}" {% if seat.is_booked %}disabled{% endif %}>
-                        {% blocktrans with seatnum=seat.seat_number %}
-                            Seat {{ seatnum }}
-                        {% endblocktrans %}
+                        {% blocktrans with seatnum=seat.seat_number %}Seat {{ seatnum }}{% endblocktrans %}
                         {% if seat.is_booked %}- {% trans "Booked" %}{% endif %}
                     </option>
                 {% endfor %}
             </select>
+        </div>
 
-<!-- New payment amount input -->
+        <div>
             <label for="amount">{% trans "Payment Amount (ETB):" %}</label>
             <input type="number" id="amount" name="amount" min="1" step="0.01" placeholder="{% trans 'Enter payment amount' %}" required>
+        </div>
 
-            <button type="submit">{% trans "Confirm Reservation & Pay" %}</button>
-        </form>
+        <button type="submit">{% trans "Confirm Reservation & Pay" %}</button>
+    </form>
 
         {% if error %}
             <div class="error-message">{{ error }}</div>
@@ -156,7 +62,7 @@
 
     <div class="seats-container">
         {% for seat in seats %}
-            <div class="seat {% if seat.is_booked %}booked{% endif %}" data-seat-id="{{ seat.id }}" onclick="selectSeat({{ seat.id }}, {{ seat.is_booked|yesno:'true,false' }})">
+            <div class="seat {% if seat.is_booked %}booked{% endif %}" data-seat-id="{{ seat.id }}" onclick="selectSeat({{ seat.id }}, {{ seat.is_booked|yesno:'true,false' }}, this)">
                 {% if not seat.is_booked %}
                     {% blocktrans with seatnum=seat.seat_number %}Seat {{ seatnum }}{% endblocktrans %}
                 {% else %}
@@ -174,18 +80,28 @@
         </div>
     </div>
 
+    <!-- Link to your global JS -->
+    <script src="{% static 'js/scripts.js' %}"></script>
     <script>
-        function selectSeat(seatId, isBooked) {
+        // Seat selection with highlight
+        let selectedSeat = null;
+
+        function selectSeat(seatId, isBooked, element) {
             if (isBooked) {
                 showPopup();
             } else {
-                // Update the select dropdown with clicked seat
+                if (selectedSeat) {
+                    selectedSeat.classList.remove('selected-seat');
+                }
+                element.classList.add('selected-seat');
+                selectedSeat = element;
+
                 document.getElementById('seat_id').value = seatId;
             }
         }
 
         function showPopup() {
-            document.getElementById('popup').style.display = 'block';
+            document.getElementById('popup').style.display = 'flex';
         }
 
         function closePopup() {

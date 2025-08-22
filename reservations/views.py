@@ -29,26 +29,33 @@ def video_detail(request, pk):
     return render(request, 'videos/video_detail.html', {'video': video})
 
 
+from django.shortcuts import render
+from .models import Movie, Rating
+from streaming.models import StreamingContent
+
 def home(request):
     query = request.GET.get('q')
+
+    # Cinema movies
     if query:
         movies = Movie.objects.filter(title__icontains=query)
     else:
         movies = Movie.objects.all()
 
-    # For calculating average rating (if using the Rating model)
+    # Calculate average rating for cinema movies
     for movie in movies:
         ratings = Rating.objects.filter(movie=movie)
-        if ratings.exists():
-            movie.average_rating = sum(r.rating for r in ratings) / len(ratings)
-        else:
-            movie.average_rating = 0  # No ratings yet
-    
+        movie.average_rating = sum(r.rating for r in ratings)/len(ratings) if ratings.exists() else 0
+
+    # Featured streaming content
+    featured_streaming = StreamingContent.objects.order_by('-release_date')[:6]  # latest 10
+
     return render(request, 'reservations/home.html', {
         'movies': movies,
-        'query': query
+        'query': query,
+        'featured_movies': movies[:6],  # featured cinema movies
+        'featured_streaming': featured_streaming,  # featured streaming content
     })
-
 
 # Movie list page
 def movie_list(request):
@@ -370,3 +377,22 @@ from django.shortcuts import render
 
 def about_view(request):
     return render(request, 'reservations/about.html')
+
+
+from django.shortcuts import render
+from .models import Movie
+
+from django.shortcuts import render
+from .models import Movie
+
+def cinema(request):
+    query = request.GET.get('q', '')  # get search query from GET
+    if query:
+        movies = Movie.objects.filter(title__icontains=query).order_by('show_time')
+    else:
+        movies = Movie.objects.all().order_by('show_time')  # show upcoming first
+
+    return render(request, 'reservations/cinema.html', {
+        'movies': movies,
+        'query': query
+    })

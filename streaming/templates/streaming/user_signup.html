@@ -1,65 +1,84 @@
-
 {% load static i18n %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% trans "Sign Up - Streaming Subscription" %}</title>
-  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% trans "Sign Up - Streaming Subscription" %}</title>
+
+    <!-- Link main CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body>
-  <h1>{% trans "Sign Up for Streaming Subscription" %}</h1>
+<body class="signup-page">
 
-  <p><a href="{% url 'home' %}">← {% trans "Back to Home" %}</a></p>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">🎬 CINEMA</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'cinema' %}">Movies</a></li>
+            <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
+            <li><a href="{% url 'about' %}">About</a></li>
+            <li><a href="{% url 'contact' %}">Contact</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="signup-btn">Login</a></li>
+        </ul>
+    </nav>
 
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+    <!-- Signup Container -->
+    <div class="signup-container">
+        <h1>{% trans "Sign Up" %}</h1>
+        <p><a href="{% url 'home' %}">← {% trans "Back to Home" %}</a></p>
 
-  <form method="POST">
-    {% csrf_token %}
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
 
-    {{ form.non_field_errors }}
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
 
-    <div>
-      {{ form.username.label_tag }}<br>
-      {{ form.username }}
-      {{ form.username.errors }}
+            <div>
+                {{ form.username.label_tag }}
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+
+            <div>
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+
+            <div>
+                {{ form.password1.label_tag }}
+                {{ form.password1 }}
+                {{ form.password1.errors }}
+            </div>
+
+            <div>
+                {{ form.password2.label_tag }}
+                {{ form.password2 }}
+                {{ form.password2.errors }}
+            </div>
+
+            <div style="flex-basis: 100%;">
+                <label for="id_plan">{% trans "Subscription Plan" %}</label>
+                <select name="plan" id="id_plan" required>
+                    <option value="monthly">{% trans "Monthly - 500 ETB" %}</option>
+                    <option value="annual">{% trans "Annual - 5000 ETB" %}</option>
+                </select>
+                {{ form.plan.errors }}
+            </div>
+
+            <button type="submit">{% trans "Sign Up" %}</button>
+        </form>
     </div>
 
-    <div>
-      {{ form.email.label_tag }}<br>
-      {{ form.email }}
-      {{ form.email.errors }}
-    </div>
-
-    <div>
-      {{ form.password1.label_tag }}<br>
-      {{ form.password1 }}
-      {{ form.password1.errors }}
-    </div>
-
-    <div>
-      {{ form.password2.label_tag }}<br>
-      {{ form.password2 }}
-      {{ form.password2.errors }}
-    </div>
-
-    <div>
-      <label for="id_plan">{% trans "Subscription Plan" %}</label><br>
-      <select name="plan" id="id_plan" required>
-        <option value="monthly">{% trans "Monthly - 500 ETB" %}</option>
-        <option value="annual">{% trans "Annual - 5000 ETB" %}</option>
-      </select>
-      {{ form.plan.errors }}
-    </div>
-
-    <button type="submit">{% trans "Sign Up" %}</button>
-  </form>
+    <!-- Link main JS -->
+    <script src="{% static 'js/scripts.js' %}"></script>
 </body>
 </html>
