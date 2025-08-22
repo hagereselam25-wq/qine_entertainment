@@ -301,6 +301,8 @@ from .forms import RatingForm
 from .utils import generate_signed_url
 from django.conf import settings
 
+
+# ------------------- Watch Video -------------------
 @login_required
 def watch_video(request, content_id):
     content = get_object_or_404(StreamingContent, id=content_id)
@@ -320,12 +322,11 @@ def watch_video(request, content_id):
     base_url = request.build_absolute_uri(f"/media/hls/{content.id}/master.m3u8")
     signed_url = generate_signed_url(video_id=str(content.id), base_url=base_url) if is_hls else video_file_url
 
-    # Log streaming
+    # Log streaming (do not increment plays here anymore)
     log, created = StreamViewLog.objects.get_or_create(user=request.user, content=content)
     if created:
         content.unique_viewers += 1
-    content.total_plays += 1
-    content.save(update_fields=['unique_viewers', 'total_plays'])
+        content.save(update_fields=['unique_viewers'])
 
     # Handle rating submission
     if request.method == 'POST':
@@ -359,6 +360,7 @@ def watch_video(request, content_id):
     }
     return render(request, 'streaming/watch_video.html', context)
 
+
 # ------------------- Report Watch Time -------------------
 @csrf_exempt
 @require_POST
@@ -384,6 +386,7 @@ def report_watch_time(request, content_id):
         StreamingContent.objects.filter(pk=content.pk).update(unique_viewers=F('unique_viewers') + 1)
 
     if event == 'start':
+        # Increment only when video actually starts
         StreamViewLog.objects.filter(pk=log.pk).update(views=F('views') + 1)
         StreamingContent.objects.filter(pk=content.pk).update(total_plays=F('total_plays') + 1)
 

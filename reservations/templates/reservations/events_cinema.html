@@ -1,0 +1,57 @@
+{% load static i18n %}
+
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% trans "Events & Cinema" %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+<header>
+    <a href="{% url 'home' %}" class="logo">🎬 Cinema Logo</a>
+    <nav class="main-nav">
+        <a href="{% url 'home' %}">{% trans "Home" %}</a>
+        <a href="{% url 'events_cinema' %}">{% trans "Events/Cinema" %}</a>
+        <a href="{% url 'about' %}">{% trans "About" %}</a>
+        <a href="{% url 'contact' %}">{% trans "Contact" %}</a>
+    </nav>
+    <form action="{% url 'events_cinema' %}" method="get" class="search-bar">
+        <input type="text" name="q" placeholder="{% trans 'Search events/cinema...' %}" value="{{ query }}">
+        <button type="submit">{% trans 'Search' %}</button>
+    </form>
+</header>
+
+<main>
+    <h1 style="text-align:center; margin-top:20px;">{% trans "All Events & Cinema" %}</h1>
+    <div class="movie-grid">
+        {% for movie in movies %}
+            <div class="movie-card">
+                {% if movie.poster %}
+                    <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
+                {% else %}
+                    <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
+                {% endif %}
+                <div class="content">
+                    <h3>{{ movie.title }}</h3>
+                    <p>{{ movie.description|truncatechars:100 }}</p>
+                    <p><strong>{% trans "Show Time:" %}</strong> {{ movie.show_time|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <p style="text-align:center;">{% trans "No events or cinema available." %}</p>
+        {% endfor %}
+    </div>
+</main>
+
+<footer>
+    <p style="text-align:center;">&copy; {{ now|date:"Y" }} {% trans "Cinema Streaming. All rights reserved." %}</p>
+</footer>
+
+</body>
+</html>
