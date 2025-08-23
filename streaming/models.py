@@ -53,6 +53,9 @@ class StreamingSubscription(models.Model):
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
 class StreamingContent(models.Model):
     CATEGORY_CHOICES = [
         ('movie', _('Movie')),
@@ -62,14 +65,66 @@ class StreamingContent(models.Model):
         ('other', _('Other')),
     ]
 
+    GENRE_CHOICES = [
+        ('action', _('Action')),
+        ('drama', _('Drama')),
+        ('comedy', _('Comedy')),
+        ('thriller', _('Thriller')),
+        ('romance', _('Romance')),
+        ('sci-fi', _('Sci-Fi')),
+        ('horror', _('Horror')),
+        ('fantasy', _('Fantasy')),
+        ('animation', _('Animation')),
+        ('adventure', _('Adventure')),
+        ('crime', _('Crime')),
+        ('mystery', _('Mystery')),
+        ('family', _('Family')),
+        ('history', _('History')),
+        ('music', _('Music')),
+        ('war', _('War')),
+        ('western', _('Western')),
+        ('biography', _('Biography')),
+        ('sport', _('Sport')),
+        ('other', _('Other')),
+    ]
+
+    LANGUAGE_CHOICES = [
+        ('am', _('Amharic')),
+        ('en', _('English')),
+        ('om', _('Afaan Oromo')),
+        ('ti', _('Tigrinya')),
+        ('so', _('Somali')),
+        ('ar', _('Arabic')),
+        ('fr', _('French')),
+        ('es', _('Spanish')),
+        ('hi', _('Hindi')),
+        ('other', _('Other')),
+    ]
+
     title = models.CharField(_("Title"), max_length=255)
     description = models.TextField(_("Description"))
+
     category = models.CharField(
         _("Category"),
         max_length=20,
         choices=CATEGORY_CHOICES,
         default='movie'
     )
+
+    # ✅ New fields for filtering
+    genre = models.CharField(
+        _("Genre"),
+        max_length=30,
+        choices=GENRE_CHOICES,
+        default='other'
+    )
+    language = models.CharField(
+        _("Language"),
+        max_length=20,
+        choices=LANGUAGE_CHOICES,
+        default='en'
+    )
+
     thumbnail = models.ImageField(_("Thumbnail"), upload_to='thumbnails/')
     video_file = models.FileField(
         _("Upload Video"),
@@ -91,6 +146,7 @@ class StreamingContent(models.Model):
         null=True,
         help_text=_("Path to generated HLS folder")
     )
+
     price_per_view = models.DecimalField(
         _("Price per View"),
         max_digits=8,
@@ -120,9 +176,10 @@ class StreamingContent(models.Model):
     average_rating = models.FloatField(_("Average Rating"), default=0.0)
     total_ratings = models.PositiveIntegerField(_("Total Ratings"), default=0)
 
-    def __str__(self):
+    def str(self):
         return self.title
-
+    
+    
 @receiver(post_save, sender=StreamingContent)
 def convert_video_to_hls(sender, instance, created, **kwargs):
     if created and instance.video_file and instance.video_file.name.lower().endswith('.mp4'):

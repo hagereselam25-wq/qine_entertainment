@@ -1,93 +1,96 @@
 {% load i18n %}
+{% load static %}
 
 {% block content %}
-<style>
-  .streaming-list ul {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 25px;
-    justify-content: center;
-  }
+<head>
+    <title>Cinema Reservation</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <script src="{% static 'js/scripts.js' %}" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<h1 class="streaming-header">{% trans "Streaming Content" %}</h1>
+<nav class="navbar">
+        <div class="logo">🎬 CINEMA</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+            <li><a href="{% url 'streaming:user_profile' %}">Profile</a></li>
 
-  .streaming-list li {
-    background: #1e1e1e;
-    border-radius: 10px;
-    padding: 15px;
-    width: 220px;
-    box-sizing: border-box;
-    text-align: center;
-    transition: background 0.3s;
-  }
+        </ul>
+    </nav>
 
-  .streaming-list li:hover {
-    background: #3498db;
-  }
+<!-- Search & Filters -->
+<div class="streaming-filter-bar">
+  <input type="text" id="streamingSearch" placeholder="{% trans 'Search by title...' %}" />
+  
+  <select id="streamingCategory">
+    <option value="">{% trans "All Categories" %}</option>
+    {% for cat in categories %}
+      <option value="{{ cat }}">{{ cat }}</option>
+    {% endfor %}
+  </select>
 
-  .streaming-list img {
-    max-width: 150px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-  }
+  <select id="streamingGenre">
+    <option value="">{% trans "All Genres" %}</option>
+    {% for genre in genres %}
+      <option value="{{ genre }}">{{ genre }}</option>
+    {% endfor %}
+  </select>
 
-  .streaming-list h3 {
-    margin: 10px 0 5px 0;
-    font-weight: bold;
-    color: #fff;
-  }
+  <select id="streamingLanguage">
+    <option value="">{% trans "All Languages" %}</option>
+    {% for lang in languages %}
+      <option value="{{ lang }}">{{ lang }}</option>
+    {% endfor %}
+  </select>
 
-  .streaming-list p {
-    margin: 5px 0;
-    color: #ccc;
-    font-size: 0.9rem;
-  }
+  <button id="streamingFilterBtn">{% trans "Apply Filter" %}</button>
+</div>
 
-  .watch-btn {
-    display: inline-block;
-    margin-top: 10px;
-    padding: 8px 16px;
-    background-color: #f1c40f;
-    color: #121212;
-    font-weight: bold;
-    text-decoration: none;
-    border-radius: 6px;
-    transition: background-color 0.3s;
-  }
-
-  .watch-btn:hover {
-    background-color: #d4ac0d;
-  }
-</style>
-
-<h1 style="text-align: center; color: white; margin-bottom: 30px;">{% trans "Streaming Content" %}</h1>
-
-<div class="streaming-list">
-  {% if contents %}
+<!-- Sections by Category -->
+{% for category, items in categorized_contents.items %}
+<div class="streaming-section">
+  <h2>{{ category }}</h2>
+  <div class="streaming-list">
     <ul>
-      {% for content in contents %}
-        <li>
+      {% for content in items %}
+        <li class="streaming-card"
+            data-title="{{ content.title|lower }}"
+            data-category="{{ content.get_category_display }}"
+            data-genre="{{ content.genre }}"
+            data-language="{{ content.language }}">
+          
           {% if content.thumbnail %}
             <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}" />
           {% else %}
-            <div style="height: 150px; background-color: #444; border-radius: 10px; margin-bottom: 10px;"></div>
+            <div class="streaming-thumbnail-placeholder"></div>
           {% endif %}
 
           <h3>{{ content.title }}</h3>
-          <p>{% blocktrans %}Category: {{ content.get_category_display }}{% endblocktrans %}</p>
-          <p>{% blocktrans %}Release Date: {{ content.release_date }}{% endblocktrans %}</p>
-          <p>{% blocktrans %}Duration: {{ content.duration_minutes }} minutes{% endblocktrans %}</p>
+          <p>{% trans "Category:" %} {{ content.get_category_display }}</p>
+          <p>{% trans "Genre:" %} {{ content.genre }}</p>
+          <p>{% trans "Language:" %} {{ content.language }}</p>
+          <p>{% trans "Release Date:" %} {{ content.release_date }}</p>
+          <p>{% trans "Duration:" %} {{ content.duration_minutes }} {% trans "minutes" %}</p>
 
           {% if content.video_file or content.video_url %}
-            <a href="{% url 'streaming:watch_video' content.id %}" class="watch-btn">{% trans "Watch Now" %}</a>
+            <a href="{% url 'streaming:watch_video' content.id %}" class="streaming-watch-btn">{% trans "Watch Now" %}</a>
           {% else %}
-            <span style="color: #888;">{% trans "No video available" %}</span>
+            <span class="streaming-no-video">{% trans "No video available" %}</span>
           {% endif %}
         </li>
       {% endfor %}
     </ul>
-  {% else %}
-    <p style="color: #ccc; text-align: center;">{% trans "No streaming content available yet." %}</p>
-  {% endif %}
+  </div>
 </div>
+{% endfor %}
+
+{% if not categorized_contents %}
+<p class="streaming-no-content">{% trans "No streaming content available yet." %}</p>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/scripts.js' %}" defer></script>
 {% endblock %}

@@ -63,6 +63,13 @@ def movie_list(request):
     return render(request, 'reservations/movie_list.html', {'movies': movies})
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+from reservations.models import Movie, Seat, Reservation, Transaction
+import requests
+
+
 def seat_selection(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
     seats = Seat.objects.filter(movie=movie).order_by('seat_number')
@@ -121,10 +128,10 @@ def seat_selection(request, movie_id):
                 "first_name": name,
                 "tx_ref": tx_ref,
                 "callback_url": request.build_absolute_uri("/payment/verify/"),
-
                 "return_url": request.build_absolute_uri(f"/payment/success/?tx_ref={tx_ref}"),
-                "customization[title]": _(f"Ticket for {movie.title}"),
-                "customization[description]": _("Cinema seat booking")
+                # ✅ wrapped with str() to avoid __proxy__ JSON issue
+                "customization[title]": str(_(f"Ticket for {movie.title}")),
+                "customization[description]": str(_("Cinema seat booking")),
             }
 
             headers = {
@@ -381,7 +388,6 @@ def about_view(request):
 
 from django.shortcuts import render
 from .models import Movie
-
 from django.shortcuts import render
 from .models import Movie
 
@@ -396,3 +402,5 @@ def cinema(request):
         'movies': movies,
         'query': query
     })
+
+

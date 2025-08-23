@@ -21,7 +21,7 @@ urlpatterns = [
     path('signup/', views.user_signup, name='signup'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
-    path('profile/', user_profile, name='user_profile'),
+    path('profile/', views.user_profile, name='user_profile'),
 
     path('i18n/', include('django.conf.urls.i18n')), 
     path('rate/<int:content_id>/', views.rate_video, name='rate_video'),

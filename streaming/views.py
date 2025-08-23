@@ -268,18 +268,40 @@ def profile(request):
 
 # ---------------------------
 # Streaming Views with Metrics
-# ---------------------------
+# ---------------------------from django.db.models import Q
+from collections import defaultdict
+
 @login_required
 def streaming_home(request):
     contents = StreamingContent.objects.all().order_by('-release_date')
+
+    # Generate signed URLs
     for content in contents:
         if content.video_url and content.video_url.endswith('.m3u8'):
             base_url = request.build_absolute_uri(content.video_url)
             content.signed_url = generate_signed_url(video_id=str(content.pk), base_url=base_url)
         else:
             content.signed_url = content.video_file.url if content.video_file else ""
-    return render(request, 'streaming/streaming_home.html', {'contents': contents})
 
+    # Get distinct values for filters
+    categories = StreamingContent.objects.values_list("category", flat=True).distinct()
+    genres = StreamingContent.objects.values_list("genre", flat=True).distinct()
+    languages = StreamingContent.objects.values_list("language", flat=True).distinct()
+
+    # Group by category for section display
+    categorized_contents = defaultdict(list)
+    for content in contents:
+        categorized_contents[content.get_category_display()].append(content)
+
+    context = {
+        "contents": contents,
+        "categories": categories,
+        "genres": genres,
+        "languages": languages,
+        "categorized_contents": dict(categorized_contents),
+    }
+
+    return render(request, "streaming/streaming_home.html", context)
 # ------------------- Watch Video -------------------
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
