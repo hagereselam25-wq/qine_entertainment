@@ -6,8 +6,9 @@ from django_countries.fields import CountryField
 import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .utils import convert_mp4_to_hls
 from django.conf import settings
+from .utils import convert_video_to_hls
+
 
 SUBSCRIPTION_CHOICES = (
     ('monthly', _('Monthly')),
@@ -56,6 +57,33 @@ from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+import os
+from django.db import models
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
+from .validators import validate_video_extension
+
+import os
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.conf import settings
+from .utils import convert_video_to_hls
+
+# ------------------- Video Validator -------------------
+ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.flv', '.wmv', '.webm']
+
+def validate_video_extension(value):
+    ext = os.path.splitext(value.name)[1].lower()
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise ValidationError(f"Unsupported video format '{ext}'. Allowed: {ALLOWED_VIDEO_EXTENSIONS}")
+
+
+# ------------------- StreamingContent Model -------------------
 class StreamingContent(models.Model):
     CATEGORY_CHOICES = [
         ('movie', _('Movie')),
@@ -110,8 +138,6 @@ class StreamingContent(models.Model):
         choices=CATEGORY_CHOICES,
         default='movie'
     )
-
-    # ✅ New fields for filtering
     genre = models.CharField(
         _("Genre"),
         max_length=30,
@@ -131,6 +157,7 @@ class StreamingContent(models.Model):
         upload_to='secure_videos/',
         blank=True,
         null=True,
+        validators=[validate_video_extension],
         help_text=_("Upload video securely")
     )
     video_url = models.URLField(
@@ -164,7 +191,8 @@ class StreamingContent(models.Model):
     total_plays = models.PositiveIntegerField(_("Total Plays"), default=0)
     unique_viewers = models.PositiveIntegerField(_("Unique Viewers"), default=0)
     total_watch_time_seconds = models.PositiveIntegerField(
-        _("Total Watch Time (seconds)"),
+
+_("Total Watch Time (seconds)"),
         default=0
     )
     completion_rate = models.DecimalField(
@@ -178,16 +206,29 @@ class StreamingContent(models.Model):
 
     def str(self):
         return self.title
-    
-    
+
+
+# ------------------- HLS Conversion Signal -------------------
 @receiver(post_save, sender=StreamingContent)
-def convert_video_to_hls(sender, instance, created, **kwargs):
-    if created and instance.video_file and instance.video_file.name.lower().endswith('.mp4'):
-        mp4_path = instance.video_file.path
-        output_dir = os.path.join(settings.MEDIA_ROOT, 'hls')
-        hls_folder, master_playlist = convert_mp4_to_hls(mp4_path, output_dir, instance.id)
-        instance.hls_folder = hls_folder
-        instance.save(update_fields=['hls_folder'])
+def convert_video_to_hls_signal(sender, instance, created, **kwargs):
+    """
+    Automatically convert uploaded videos to HLS if not already converted.
+    """
+    if instance.video_file and not instance.hls_folder:
+        try:
+            video_path = instance.video_file.path
+            output_dir = os.path.join(settings.MEDIA_ROOT, 'hls')
+            hls_folder, _ = convert_video_to_hls(
+                video_path=video_path,
+                output_dir=output_dir,
+                content_id=instance.id,
+                verbose=True
+            )
+            instance.hls_folder = os.path.relpath(hls_folder, settings.MEDIA_ROOT).replace("\\", "/")
+            instance.save(update_fields=['hls_folder'])
+        except Exception as e:
+            print("⚠️ HLS conversion failed:", e)
+
 
 
 # -------------------- Stream View Log --------------------

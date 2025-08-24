@@ -1,27 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>{% trans "Thank You" %}</title>
-</head>
-<body>
-    <h1>{% trans "Thank you for your reservation!" %}</h1>
-    <p>{% trans "Your reference:" %} {{ reservation.id }}</p>
-    <p>{% trans "Name:" %} {{ reservation.full_name }}</p>
-    <p>{% trans "Movie:" %} {{ reservation.movie.title }}</p>
-    <p>{% trans "Date:" %} {{ reservation.show_date }}</p>
-    <p>{% trans "Seat:" %} {{ reservation.seat_number }}</p>
+<p>  
+  <a href="{% url 'home' %}">← {% trans "Return to Home" %}</a>  
+</p>  <!DOCTYPE html>  <html lang="en">  
+<head>  
+    <title>{% trans "Thank You" %}</title>  
+</head>  
+<body>  
+    <h1>{% trans "Thank you for your reservation!" %}</h1>  
+    <p>{% trans "Your reference:" %} {{ reservation.id }}</p>  
+    <p>{% trans "Name:" %} {{ reservation.full_name }}</p>  
+    <p>{% trans "Movie:" %} {{ reservation.movie.title }}</p>  
+    <p>{% trans "Date:" %} {{ reservation.show_date }}</p>  
+    <p>{% trans "Seat:" %} {{ reservation.seat_number }}</p>  <h3>{% trans "QR Code Confirmation" %}</h3>  
+<img src="data:image/png;base64,{{ qr_base64 }}" alt="{% trans 'QR Code' %}" />  
+<br>  
+<a href="data:image/png;base64,{{ qr_base64 }}" download="ticket_{{ reservation.id }}.png">  
+    <button>{% trans "Download Ticket QR" %}</button>  
+</a>  
+<br><br>  
+<h2>{% trans "Reservation Successful 🎉" %}</h2>  
+<p>{% trans "Thank you for your payment. Here is your ticket:" %}</p>  
 
-    <h3>{% trans "QR Code Confirmation" %}</h3>
-    <img src="data:image/png;base64,{{ qr_base64 }}" alt="{% trans 'QR Code' %}" />
-    <br>
-    <a href="data:image/png;base64,{{ qr_base64 }}" download="ticket_{{ reservation.id }}.png">
-        <button>{% trans "Download Ticket QR" %}</button>
-    </a>
-    <br><br>
-    <h2>{% trans "Reservation Successful 🎉" %}</h2>
-    <p>{% trans "Thank you for your payment. Here is your ticket:" %}</p>
+<br>  
+<a href="{{ redirect_url }}">← {% trans "Return to Home" %}</a>
 
-    <br>
-    <a href="{{ redirect_url }}">← {% trans "Return to Home" %}</a>
-</body>
+</body>  
 </html>

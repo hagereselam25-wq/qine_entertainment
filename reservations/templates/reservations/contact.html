@@ -5,46 +5,43 @@
     <meta charset="UTF-8">
     <title>{% trans "Contact Us" %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <style>
-        .contact-container {
-            max-width: 600px;
-            margin: 50px auto;
-            background: #1f1f1f;
-            padding: 30px;
-            border-radius: 10px;
-            color: #f0f0f0;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #333;
-            background: #121212;
-            color: #f0f0f0;
-        }
-        button {
-            padding: 10px 20px;
-            background: #e50914;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover { background: #f6121d; }
-    </style>
 </head>
-<body>
+<body class="contact-page">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">🎬 CINEMA</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+            <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
+            <li><a href="{% url 'about' %}">About</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
+            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
+        </ul>
+    </nav>
+
+
     <div class="contact-container">
         <h1>{% trans "Contact Us" %}</h1>
-        <form method="POST">
+
+        <!-- Feedback Form -->
+        <form method="POST" class="contact-form">
             {% csrf_token %}
             <input type="text" name="name" placeholder="{% trans 'Your Name' %}" required>
             <input type="email" name="email" placeholder="{% trans 'Your Email' %}" required>
             <textarea name="feedback" placeholder="{% trans 'Your Feedback' %}" rows="5" required></textarea>
             <button type="submit">{% trans "Send Feedback" %}</button>
         </form>
+
+        <!-- Contact Info (Below Form) -->
+        <div class="contact-info">
+            <h2>{% trans "Get in Touch" %}</h2>
+            <p><strong>{% trans "Phone:" %}</strong> +251-900-123-456</p>
+            <p><strong>{% trans "Address:" %}</strong> Gondar, Ethiopia</p>
+            <p><strong>{% trans "Email:" %}</strong> MSTRS@cinema.com</p>
+        </div>
     </div>
+    
 
     {% if success %}
     <script>

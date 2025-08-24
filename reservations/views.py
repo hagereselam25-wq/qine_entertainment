@@ -78,18 +78,8 @@ def seat_selection(request, movie_id):
         seat_id = request.POST.get('seat_id')
         name = request.POST.get('name')
         email = request.POST.get('email')
-        amount = request.POST.get('amount')
 
-        try:
-            amount = float(amount)
-            if amount <= 0:
-                raise ValueError(_("Invalid amount"))
-        except:
-            return render(request, 'reservations/seat_selection.html', {
-                'movie': movie,
-                'seats': seats,
-                'error': _('Please enter a valid payment amount.')
-            })
+        amount = float(movie.ticket_price)  # Use fixed ticket price
 
         try:
             seat = Seat.objects.select_for_update().get(id=seat_id, movie=movie)
@@ -129,7 +119,6 @@ def seat_selection(request, movie_id):
                 "tx_ref": tx_ref,
                 "callback_url": request.build_absolute_uri("/payment/verify/"),
                 "return_url": request.build_absolute_uri(f"/payment/success/?tx_ref={tx_ref}"),
-                # ✅ wrapped with str() to avoid __proxy__ JSON issue
                 "customization[title]": str(_(f"Ticket for {movie.title}")),
                 "customization[description]": str(_("Cinema seat booking")),
             }
@@ -163,28 +152,56 @@ def seat_selection(request, movie_id):
 
     return render(request, 'reservations/seat_selection.html', {
         'movie': movie,
-        'seats': seats
+        'seats': seats,
+        'ticket_price': movie.ticket_price  # Pass to template
     })
+
+import requests
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.mail import EmailMessage
+from django.shortcuts import render
+from django.utils.translation import gettext as _
+from io import BytesIO
+import qrcode
+from .models import Transaction
 
 
 def payment_success(request):
     tx_ref = request.GET.get("tx_ref")
     if not tx_ref:
-        return render(request, "reservations/payment_failed.html", {"error": _("Transaction reference missing.")})
+        return render(request, "reservations/payment_failed.html", {
+            "error": _("Transaction reference missing.")
+        })
 
     url = f"https://api.chapa.co/v1/transaction/verify/{tx_ref}"
     headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
-    response = requests.get(url, headers=headers)
-    chapa_data = response.json()
+
+    try:
+        response = requests.get(url, headers=headers, timeout=15)  # ⏱️ added timeout
+        response.raise_for_status()
+        chapa_data = response.json()
+    except requests.exceptions.Timeout:
+        return render(request, "reservations/payment_failed.html", {
+            "error": _("Payment verification timed out. Please try again.")
+        })
+    except requests.exceptions.RequestException as e:
+        return render(request, "reservations/payment_failed.html", {
+            "error": _("Could not verify payment: ") + str(e)
+        })
 
     if chapa_data.get("status") != "success":
-        return render(request, "reservations/payment_failed.html", {"error": _("Payment verification failed.")})
+        return render(request, "reservations/payment_failed.html", {
+            "error": _("Payment verification failed.")
+        })
 
     try:
         transaction = Transaction.objects.get(transaction_id=tx_ref)
         reservation = transaction.reservation
     except Transaction.DoesNotExist:
-        return render(request, "reservations/payment_failed.html", {"error": _("Transaction not found.")})
+        return render(request, "reservations/payment_failed.html", {
+            "error": _("Transaction not found.")
+        })
 
     if not reservation.is_paid:
         reservation.is_paid = True
@@ -193,19 +210,22 @@ def payment_success(request):
         transaction.status = "success"
         transaction.save()
 
+        # ✅ Generate QR Code
         qr = qrcode.make(_(f"Reservation ID: {reservation.id} - Seat: {reservation.seat.seat_number}"))
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
         reservation.qr_code.save(f"qr_{reservation.id}.png", ContentFile(buffer.getvalue()))
         buffer.close()
 
-    # Send email only if not sent yet
+    # ✅ Send confirmation email (only once)
     if not reservation.email_sent:
         subject = _("🎟 Your Cinema Ticket Confirmation")
-        message = _(f"Dear {reservation.user},\n\nYour ticket has been confirmed. Seat: {reservation.seat.seat_number}")
+        message = _(f"Dear {reservation.user},\n\nYour ticket has been confirmed. "
+                    f"Seat: {reservation.seat.seat_number}")
 
         email_msg = EmailMessage(subject, message, to=[reservation.email])
-        email_msg.attach(f"ticket_qr_{reservation.id}.png", reservation.qr_code.read(), "image/png")
+        if reservation.qr_code:
+            email_msg.attach(f"ticket_qr_{reservation.id}.png", reservation.qr_code.read(), "image/png")
         email_msg.send()
 
         reservation.email_sent = True
@@ -215,7 +235,6 @@ def payment_success(request):
         "reservation": reservation,
         "qr_url": reservation.qr_code.url if reservation.qr_code else None,
     })
-
 
 # Ticket confirmation page
 def ticket_confirmation(request, ticket_id):

@@ -1,170 +1,15 @@
 {% load static %}
 {% load i18n %}
 
-<style>
-    body {
-        background: #080808;
-        color: white;
-        font-family: 'Poppins', sans-serif;
-        margin: 0;
-    }
-
-    /* Navbar */
-    .header {
-        position: fixed;
-        width: 100%;
-        top: 0;
-        left: 0;
-        padding: 1rem 5%; /* smaller padding */
-        background-color: rgba(0,0,0,0.3);
-        backdrop-filter: blur(10px);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-    }
-
-    .logo {
-        font-size: 2rem; /* smaller logo */
-        color: #2af145;
-        font-weight: 800;
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-
-    .logo:hover {
-        transform: scale(1.1);
-    }
-
-    .navbar a {
-        color: white;
-        margin-left: 1.5rem; /* smaller spacing */
-        text-decoration: none;
-        font-size: 1.3rem; /* smaller text */
-        border-bottom: 3px solid transparent;
-        transition: 0.3s ease;
-    }
-
-    .navbar a:hover {
-        border-bottom: 3px solid #2af145;
-        color: #2af145;
-    }
-
-    /* Profile Container */
-    .profile-container {
-        max-width: 900px;
-        margin: 100px auto 50px; /* adjusted for smaller navbar */
-    }
-
-    /* Cards without animation by default */
-    .profile-card, .stats-card, .history-card {
-        border-radius: 12px;
-        padding: 20px;
-        background: #080808;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .profile-card:hover, .stats-card:hover, .history-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 0 25px #2af145; /* glow on hover only */
-    }
-
-    .profile-card {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .profile-card img {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid #2af145;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .profile-card img:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 25px #2af145;
-    }
-
-    .profile-card h2 {
-        margin-top: 0;
-        color: #2af145;
-        font-size: 2.2rem; /* slightly smaller */
-    }
-
-    .profile-card button {
-        padding: 0.4rem 0.8rem;
-        background: #2af145;
-        color: #080808;
-        border-radius: 2rem;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.95rem;
-        border: none;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .profile-card button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 25px #2af145;
-    }
-
-    .stats-card {
-        margin-top: 30px;
-        background: #001005;
-    }
-
-    .stats-card h3, .history-card h3 {
-        color: #2af145;
-        font-size: 1.8rem; /* slightly smaller */
-    }
-
-    .history-card {
-        margin-top: 30px;
-        background: #080808;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        border-radius: 8px;
-        overflow: hidden;
-        background: #001005;
-    }
-
-    table thead tr {
-        background: #2af145;
-        color: #080808;
-    }
-
-    table tbody tr {
-        background: #080808;
-        color: white;
-        transition: background 0.3s, transform 0.3s;
-    }
-
-    table tbody tr:hover {
-        background: #2af145;
-        color: #080808;
-        transform: scale(1.01);
-    }
-
-    table th, table td {
-        padding: 10px;
-        text-align: left;
-    }
-</style>
-
 <!-- Navbar -->
-<div class="header">
+<div class="navbar">
     <div class="logo">Streaming<span>.</span></div>
-    <div class="navbar">
-        <a href="{% url 'home' %}">{% trans "Home" %}</a>
-        <a href="#logout">{% trans "Logout" %}</a>
-    </div>
+    <ul class="nav-links">
+        <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
+        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+        <li><a href="{% url 'streaming:logout' %}">{% trans "Logout" %}</a></li>
+    </ul>
 </div>
 
 <div class="profile-container">
@@ -172,12 +17,12 @@
     <!-- Profile Card -->
     <div class="profile-card">
         <img src="{{ profile.profile_picture.url }}" alt="{% trans 'Profile Picture' %}">
-        <div style="flex:1;">
+        <div class="profile-info">
             <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
-            <form method="post" enctype="multipart/form-data" style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+            <form method="post" enctype="multipart/form-data" class="profile-form">
                 {% csrf_token %}
                 {{ form.profile_picture }}
-                <button type="submit">{% trans "Update Picture" %}</button>
+                <button type="submit" class="btn-small">{% trans "Update Picture" %}</button>
             </form>
         </div>
     </div>

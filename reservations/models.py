@@ -16,7 +16,9 @@ class Movie(models.Model):
 
     rating = models.PositiveIntegerField(_("Rating"), default=0)
 
-    def __str__(self):
+    ticket_price = models.DecimalField(_("Ticket Price (ETB)"), max_digits=8, decimal_places=2, default=50.00)
+
+    def str(self):
         return self.title
 
 

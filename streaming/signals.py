@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 
 from .models import UserProfile, StreamingContent, StreamViewLog, StreamingAnalytics
-from .utils import convert_mp4_to_hls
+from .utils import convert_video_to_hls
 
 # -------------------- User Profile Signals --------------------
 @receiver(post_save, sender=User)
@@ -21,23 +21,35 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 # -------------------- HLS Conversion Signal --------------------
+# ✅ Updated signal: now accepts all supported video formats
+import os
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.conf import settings
+from .models import StreamingContent
+from .utils import convert_video_to_hls
+
 @receiver(post_save, sender=StreamingContent)
-def handle_hls_conversion(sender, instance, created, **kwargs):
-    # Only convert if it's a new upload or missing hls_folder
-    if instance.video_file and not instance.hls_folder and instance.video_file.name.lower().endswith('.mp4'):
+def convert_video_to_hls_signal(sender, instance, created, **kwargs):
+    """
+    Auto-convert uploaded videos to HLS with verbose debug output.
+    """
+    if instance.video_file and not instance.hls_folder:
         try:
-            hls_folder, _ = convert_mp4_to_hls(
-                mp4_path=os.path.join(settings.MEDIA_ROOT, instance.video_file.name),
-                output_dir=os.path.join(settings.MEDIA_ROOT, 'hls'),
-                content_id=instance.id
+            video_path = instance.video_file.path
+            output_dir = os.path.join(settings.MEDIA_ROOT, 'hls')
+            hls_folder, _ = convert_video_to_hls(
+                video_path=video_path,
+                output_dir=output_dir,
+                content_id=instance.id,
+                verbose=True  # enable debug logs
             )
             instance.hls_folder = os.path.relpath(hls_folder, settings.MEDIA_ROOT).replace("\\", "/")
             instance.save(update_fields=['hls_folder'])
         except Exception as e:
-            print(_("HLS conversion failed:"), e)
-
-
-# -------------------- Update Total Watch Time --------------------
+            print("⚠️ HLS conversion failed:", e)
+            
+            # -------------------- Update Total Watch Time --------------------
 @receiver(post_save, sender=StreamViewLog)
 def update_total_watch_time(sender, instance, **kwargs):
     """

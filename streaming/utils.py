@@ -36,21 +36,63 @@ def validate_signed_url(video_id, expires, signature):
 
     return hmac.compare_digest(expected_signature, signature)
 
+import os
+import subprocess
+from django.core.exceptions import ValidationError
 
-# ------------------- MP4 → HLS Conversion -------------------
-def convert_mp4_to_hls(mp4_path, output_dir, content_id):
+# Allowed video extensions
+ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.flv', '.wmv', '.webm']
+
+def validate_video_extension(value):
+    ext = os.path.splitext(value.name)[1].lower()
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise ValidationError(f"Unsupported video format '{ext}'. Allowed: {ALLOWED_VIDEO_EXTENSIONS}")
+
+def convert_video_to_hls(video_path, output_dir, content_id, verbose=True):
     """
-    Convert MP4 to single-quality HLS for simplicity.
-    Output directory will be MEDIA_ROOT/hls/<content_id>/
+    Convert any supported video to single-quality HLS.
+    Output: MEDIA_ROOT/hls/<content_id>/
     """
+    if not os.path.exists(video_path):
+        raise FileNotFoundError(f"Video file not found: {video_path}")
+
+    # Skip if already HLS
+    if video_path.lower().endswith(".m3u8"):
+        hls_folder = os.path.dirname(video_path)
+        master_playlist = video_path
+        if verbose:
+            print(f"[DEBUG] File is already HLS. Skipping conversion for {content_id}")
+        return hls_folder, master_playlist
+
+    # Validate video using ffprobe
+    try:
+        probe_cmd = [
+            "ffprobe", "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=codec_type",
+            "-of", "csv=p=0",
+            video_path
+        ]
+        probe_result = subprocess.run(probe_cmd, capture_output=True, text=True, check=True)
+        if "video" not in probe_result.stdout:
+            raise ValueError(f"The file is not a valid video: {video_path}")
+        if verbose:
+            print(f"[DEBUG] ffprobe check passed for {video_path}")
+    except subprocess.CalledProcessError as e:
+        raise ValueError(f"ffprobe failed for {video_path}: {e.stderr}")
+
+    # Ensure output folder exists
     hls_folder = os.path.join(output_dir, str(content_id))
     os.makedirs(hls_folder, exist_ok=True)
+
     master_playlist = os.path.join(hls_folder, "master.m3u8")
     segment_pattern = os.path.join(hls_folder, "file_%03d.ts")
 
+    # FFmpeg command (verbose)
     cmd = [
         "ffmpeg",
-        "-i", mp4_path,
+        "-y",  # overwrite if exists
+        "-i", video_path,
         "-c:v", "h264",
         "-c:a", "aac",
         "-preset", "fast",
@@ -61,11 +103,17 @@ def convert_mp4_to_hls(mp4_path, output_dir, content_id):
         master_playlist
     ]
 
+    if verbose:
+        print(f"[DEBUG] Running ffmpeg command: {' '.join(cmd)}")
+
     try:
-        subprocess.run(cmd, check=True)
-        print(f"HLS conversion complete for content ID {content_id}: {master_playlist}")
+        process = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if verbose:
+            print(f"[DEBUG] ffmpeg output:\n{process.stderr.decode('utf-8')}")
+            print(f"[INFO] HLS conversion complete for content ID {content_id}")
     except subprocess.CalledProcessError as e:
-        print(f"Error during HLS conversion for content ID {content_id}: {e}")
-        raise e
+        error_output = e.stderr.decode("utf-8") if e.stderr else str(e)
+        print(f"[ERROR] HLS conversion failed for content ID {content_id}:\n{error_output}")
+        raise RuntimeError(f"HLS conversion failed: {error_output}")
 
     return hls_folder, master_playlist

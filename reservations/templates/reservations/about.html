@@ -5,45 +5,60 @@
     <meta charset="UTF-8">
     <title>{% trans "About Us" %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <style>
-        .about-container {
-            max-width: 800px;
-            margin: 50px auto;
-            background: #1f1f1f;
-            padding: 30px;
-            border-radius: 10px;
-            color: #f0f0f0;
-            line-height: 1.6;
-        }
-        h1 {
-            color: #e50914;
-            margin-bottom: 20px;
-        }
-        p {
-            margin-bottom: 15px;
-        }
-        .back-home {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #f0f0f0;
-            background-color: #e50914;
-            padding: 8px 15px;
-            border-radius: 5px;
-            text-decoration: none;
-            transition: background-color 0.3s ease;
-        }
-        .back-home:hover {
-            background-color: #b0060f;
-        }
-    </style>
 </head>
-<body>
+<body class="about-page">
+     <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">🎬 CINEMA</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+            <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
+            <li><a href="{% url 'contact' %}">Contact</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
+            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
+        </ul>
+    </nav>
+
     <div class="about-container">
-        <a href="{% url 'home' %}" class="back-home">{% trans "← Home" %}</a>
-        <h1>{% trans "About Cinema Streaming" %}</h1>
-        <p>{% trans "Welcome to Cinema Streaming! Our platform lets you reserve movie tickets and stream movies online." %}</p>
-        <p>{% trans "We aim to provide the best cinema experience at home or on the go. Enjoy the latest movies with high-quality streaming and easy seat reservation." %}</p>
-        <p>{% trans "Our mission is to bring entertainment closer to you and make movie watching seamless and enjoyable." %}</p>
+        <h1>{% trans "About Us" %}</h1>
+
+        <!-- Slideshow Section -->
+        <div class="about-slideshow">
+            <div class="slides fade">
+                <img src="{% static 'images/slide1.jpg' %}" alt="Cinema Experience">
+            </div>
+            <div class="slides fade">
+                <img src="{% static 'images/slide2.jpg' %}" alt="Streaming Movies">
+            </div>
+            <div class="slides fade">
+                <img src="{% static 'images/slide3.jpg' %}" alt="Ticket Reservation">
+            </div>
+        </div>
+
+        <!-- About Content -->
+        <div class="about-text">
+            <p>{% trans "Welcome to Our Site! Our platform lets you reserve movie tickets and stream movies online." %}</p>
+            <p>{% trans "We aim to provide the best cinema experience at home or on the go. Enjoy the latest movies with high-quality streaming and easy seat reservation Our mission is to bring entertainment closer to you and make movie watching seamless and enjoyable." %}</p>
+        </div>
     </div>
+
+    <!-- Slideshow Script -->
+    <script>
+        let slideIndex = 0;
+        showSlides();
+
+        function showSlides() {
+            let i;
+            let slides = document.getElementsByClassName("slides");
+            for (i = 0; i < slides.length; i++) {
+                slides[i].style.display = "none";  
+            }
+            slideIndex++;
+            if (slideIndex > slides.length) {slideIndex = 1}    
+            slides[slideIndex-1].style.display = "block";  
+            setTimeout(showSlides, 3000); // Change image every 3s
+        }
+    </script>
 </body>
 </html>
