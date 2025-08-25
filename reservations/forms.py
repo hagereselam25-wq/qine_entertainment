@@ -1,4 +1,4 @@
-# reservations/forms.py
+#calls forms from django to collect and validate user input.
 from django import forms
 
 class ContactForm(forms.Form):

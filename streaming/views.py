@@ -458,13 +458,28 @@ from django.utils.translation import gettext_lazy as _
 from .models import UserProfile, StreamViewLog
 from .forms import ProfileUpdateForm
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .models import UserProfile, WatchHistory  # make sure WatchHistory imported
+from .forms import ProfileUpdateForm
+from django.utils import timezone
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from django.http import JsonResponse
+from .models import UserProfile, StreamViewLog
+from .forms import ProfileUpdateForm
+
 @login_required
 def user_profile(request):
-    # Get or create the user profile
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
-    # Get streaming watch logs
-    logs = StreamViewLog.objects.filter(user=request.user).select_related('content').order_by('-last_viewed')
+    # Get watch logs after last cleared time
+    logs = StreamViewLog.objects.filter(user=request.user)
+    if profile.history_cleared_at:
+        logs = logs.filter(last_viewed__gt=profile.history_cleared_at)
+    logs = logs.select_related('content').order_by('-last_viewed')
 
     watch_history = []
     total_watch_time = 0
@@ -476,14 +491,12 @@ def user_profile(request):
             'video_title': log.content.title,
             'watch_date': log.last_viewed,
             'duration_watched': minutes,
-            'completion_rate': log.content.completion_rate,
-            # 'country' removed
         })
 
     total_videos = len(watch_history)
 
-    # Handle profile update form
-    if request.method == "POST":
+    # Profile picture update
+    if request.method == "POST" and 'profile_picture' in request.FILES:
         form = ProfileUpdateForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
@@ -500,6 +513,22 @@ def user_profile(request):
     }
 
     return render(request, 'streaming/profile.html', context)
+
+@login_required
+def clear_watch_history(request):
+    if request.method == "POST":
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        profile.history_cleared_at = timezone.now()
+        profile.save(update_fields=['history_cleared_at'])
+
+        # Return JSON response with updated stats
+        return JsonResponse({
+            'success': True,
+            'total_videos': 0,
+            'total_watch_time': 0
+        })
+
+    return JsonResponse({'success': False}, status=400)
 
 # ------------------- Admin Analytics -------------------
 @staff_member_required
@@ -578,25 +607,40 @@ def export_analytics_csv(request):
     return response
 
 
-# views.py
+from django.db.models import Avg, Count
+
 @login_required
 @require_POST
 def rate_video(request, content_id):
     content = get_object_or_404(StreamingContent, id=content_id)
     form = RatingForm(request.POST)
+
     if form.is_valid():
         rating_value = form.cleaned_data['rating']
+
+        # Save or update the rating
         rating_obj, created = StreamingRating.objects.update_or_create(
             user=request.user,
             content=content,
             defaults={'rating': rating_value}
         )
 
-        # Recalculate average rating
-        agg = content.ratings.aggregate(avg=models.Avg('rating'), total=models.Count('id'))
-        content.avg_rating = agg['avg'] or 0
-        content.total_ratings = agg['total'] or 0
-        content.save(update_fields=['avg_rating', 'total_ratings'])
+        # Force refresh from DB
+        agg = StreamingRating.objects.filter(content=content).aggregate(
+            avg=Avg('rating'),
+            total=Count('id')
+        )
+        print("DEBUG:", agg)  # 👈 Check console
 
-        return JsonResponse({'ok': True, 'avg_rating': content.avg_rating, 'total_ratings': content.total_ratings})
+        # Save into StreamingContent
+        content.average_rating = agg['avg'] or 0
+        content.total_ratings = agg['total'] or 0
+        content.save(update_fields=['average_rating', 'total_ratings'])
+
+        return JsonResponse({
+            'ok': True,
+            'average_rating': round(content.average_rating, 2),
+            'total_ratings': content.total_ratings
+        })
+
     return JsonResponse({'ok': False, 'errors': form.errors}, status=400)

@@ -1,5 +1,4 @@
-# apps.py
-
+# our app helps django to initialize our reservation app defining custom configs
 from django.apps import AppConfig
 
 class ReservationsConfig(AppConfig):
@@ -7,4 +6,4 @@ class ReservationsConfig(AppConfig):
     name = 'reservations'
 
     def ready(self):
-        import reservations.signals  # Import the signals to ensure they are connected
+        import reservations.signals  # imports the signals to ensure they are connected

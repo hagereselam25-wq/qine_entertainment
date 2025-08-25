@@ -1,8 +1,11 @@
+#post_save → signal triggered after a model instance is saved
+#receiver → decorator that connects a function to a signal
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from .models import Movie, Seat
 
+# our signals help auto create (seats in this case) when a model instance is saved
 @receiver(post_save, sender=Movie)
 def create_custom_seats(sender, instance, created, **kwargs):
     if created:

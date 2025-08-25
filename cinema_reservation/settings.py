@@ -2,14 +2,11 @@ from pathlib import Path
 import os
 import secrets
 
-# -------------------------------
-# Project Base Directory
-# -------------------------------
+# locates our project base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# -------------------------------
-# Security & Secrets
-# -------------------------------
+# secret hash of our secret key
+
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
     'django-insecure-u0(-j67*szm(@!gfg&!l4m422ui)h71_9l-7gk^@$&1n=27h9o'
@@ -19,25 +16,23 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# Signed URL secret (keep in env for production)
+# hashed secret key for Signed URL secret 
 SIGNED_URL_SECRET = os.environ.get(
     'SIGNED_URL_SECRET',
     'b8c3af5f9e0f44f4bda3d298f5c0f3d7f83f2e9f4b6d4a0a9b17f3cd8c8f7a23'
 )
 
-# -------------------------------
-# Chapa Payment
-# -------------------------------
+# our chapa payment secret key and endpoints
+
 CHAPA_SECRET_KEY = os.environ.get(
     'CHAPA_SECRET_KEY',
-    'CHASECK_TEST-LVVM7kiTEAfpgTT9ULzRH4qm4dtac79i'
+    'CHASECK_TEST-LVVM7kiTEAfpgTT9ULzRH4qm4dtac79i' #our secret key to authorize transactions
 )
-CHAPA_BASE_URL = 'https://api.chapa.co/v1/transaction/initialize'
-CHAPA_VERIFY_URL = 'https://api.chapa.co/v1/transaction/verify/'
+CHAPA_BASE_URL = 'https://api.chapa.co/v1/transaction/initialize' # endpoint to initiate payment
+CHAPA_VERIFY_URL = 'https://api.chapa.co/v1/transaction/verify/'  # also an endpoint to verify using url plus reference number
 
-# -------------------------------
-# Applications
-# -------------------------------
+# applications to run our site
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,12 +45,12 @@ INSTALLED_APPS = [
     'translations'
 ]
 
-
+# this middleware, inspects and monitors layer processor from users request to djangos or apps response
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',  # i18n
-    'translations.middleware.JSONTranslationMiddleware',  # your JSON translation middleware
+    'django.middleware.locale.LocaleMiddleware', 
+    'translations.middleware.JSONTranslationMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -66,6 +61,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'cinema_reservation.urls'
 
+
+#our templates helps django to render/generate html files dynamically
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -83,13 +80,12 @@ TEMPLATES = [
     },
 ]
 
+# used for loginrequired function, tells Django where to send users when they try to access a page that requires login but are not authenticated
 LOGIN_URL = '/streaming/login/'
 
 WSGI_APPLICATION = 'cinema_reservation.wsgi.application'
 
-# -------------------------------
 # Database
-# -------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -97,9 +93,7 @@ DATABASES = {
     }
 }
 
-# -------------------------------
 # Password Validators
-# -------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
@@ -107,9 +101,8 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
-# -------------------------------
+
 # Internationalization
-# -------------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 
@@ -128,9 +121,7 @@ LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
 
-# -------------------------------
 # Static and Media
-# -------------------------------
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -138,15 +129,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# -------------------------------
-# Default Primary Key
-# -------------------------------
+# default primary key for auto id generation
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# -------------------------------
-# Email Configuration
-# -------------------------------
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# our email configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+# our model defines the tables needed our reservation flow: Movie → Seat → Reservation → Transaction
 
 class Movie(models.Model):
     title = models.CharField(_("Title"), max_length=100)
@@ -14,10 +15,9 @@ class Movie(models.Model):
     num_rows = models.PositiveIntegerField(_("Number of Rows"), default=5)
     seats_per_row = models.PositiveIntegerField(_("Seats per Row"), default=10)
 
-    rating = models.PositiveIntegerField(_("Rating"), default=0)
-
     ticket_price = models.DecimalField(_("Ticket Price (ETB)"), max_digits=8, decimal_places=2, default=50.00)
 
+    # __str__ defines how an object is displayed as a string
     def str(self):
         return self.title
 
@@ -56,9 +56,3 @@ class Transaction(models.Model):
         return f"{self.transaction_id} - {self.status}"
 
 
-class Rating(models.Model):
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='ratings', verbose_name=_("Movie"))
-    rating = models.IntegerField(_("Rating"))
-
-    def __str__(self):
-        return f'{self.movie.title} - {self.rating}'

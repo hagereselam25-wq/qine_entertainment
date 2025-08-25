@@ -54,15 +54,12 @@ class StreamingSubscription(models.Model):
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 
 import os
 from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.translation import gettext_lazy as _
 from .validators import validate_video_extension
 
 import os
@@ -190,9 +187,7 @@ class StreamingContent(models.Model):
     # Analytics
     total_plays = models.PositiveIntegerField(_("Total Plays"), default=0)
     unique_viewers = models.PositiveIntegerField(_("Unique Viewers"), default=0)
-    total_watch_time_seconds = models.PositiveIntegerField(
-
-_("Total Watch Time (seconds)"),
+    total_watch_time_seconds = models.PositiveIntegerField(_("Total Watch Time (seconds)"),
         default=0
     )
     completion_rate = models.DecimalField(
@@ -254,10 +249,23 @@ def profile_image_path(instance, filename):
     return os.path.join('profile_pics', filename)
 
 
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+
+def profile_image_path(instance, filename):
+    return f'profiles/{instance.user.username}/{filename}'
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    profile_picture = models.ImageField(_("Profile Picture"), upload_to=profile_image_path, default='profile_pics/default_profile.png')
+    profile_picture = models.ImageField(
+        _("Profile Picture"), 
+        upload_to=profile_image_path, 
+        default='profile_pics/default_profile.png'
+    )
     bio = models.TextField(_("Bio"), blank=True, null=True)
+    history_cleared_at = models.DateTimeField(_("History Cleared At"), blank=True, null=True)  # ✅ track last clear
 
     def str(self):
         return self.user.username
@@ -275,11 +283,6 @@ class WatchHistory(models.Model):
 
 
 # -------------------- Streaming Analytics --------------------
-class StreamingAnalytics(models.Model):
-    class Meta:
-        managed = False  # No database table
-        verbose_name = _("Streaming Analytics")
-        verbose_name_plural = _("Streaming Analytics")
 
 
 # models.py

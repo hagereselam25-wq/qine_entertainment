@@ -1,27 +1,49 @@
-<p>  
-  <a href="{% url 'home' %}">← {% trans "Return to Home" %}</a>  
-</p>  <!DOCTYPE html>  <html lang="en">  
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="{% get_current_language %}">
 <head>  
-    <title>{% trans "Thank You" %}</title>  
-</head>  
-<body>  
-    <h1>{% trans "Thank you for your reservation!" %}</h1>  
-    <p>{% trans "Your reference:" %} {{ reservation.id }}</p>  
-    <p>{% trans "Name:" %} {{ reservation.full_name }}</p>  
-    <p>{% trans "Movie:" %} {{ reservation.movie.title }}</p>  
-    <p>{% trans "Date:" %} {{ reservation.show_date }}</p>  
-    <p>{% trans "Seat:" %} {{ reservation.seat_number }}</p>  <h3>{% trans "QR Code Confirmation" %}</h3>  
-<img src="data:image/png;base64,{{ qr_base64 }}" alt="{% trans 'QR Code' %}" />  
-<br>  
-<a href="data:image/png;base64,{{ qr_base64 }}" download="ticket_{{ reservation.id }}.png">  
-    <button>{% trans "Download Ticket QR" %}</button>  
-</a>  
-<br><br>  
-<h2>{% trans "Reservation Successful 🎉" %}</h2>  
-<p>{% trans "Thank you for your payment. Here is your ticket:" %}</p>  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Thank You!" %}</title>
 
-<br>  
-<a href="{{ redirect_url }}">← {% trans "Return to Home" %}</a>
+    <!-- Link main CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head> 
 
-</body>  
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">Cinema</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">{% trans "Login" %}</a></li>
+        </ul>
+    </nav>
+
+    <!-- Thank You Section -->
+    <section class="thankyou-container">
+        <div class="thankyou-card">
+            <h2>{% trans "🎉 Payment Successful!" %}</h2>  
+
+            <p>
+                {% blocktrans with username=reservation.user seat=reservation.seat.seat_number %}  
+                    Thank you, <strong>{{ username }}</strong>. Your seat <strong>{{ seat }}</strong> is confirmed.  
+                {% endblocktrans %}  
+            </p>  
+
+            {% if qr_url %}
+                <div class="qr-box">
+                    <img src="{{ qr_url }}" alt="{% trans 'Your Ticket QR Code' %}" />
+                    <p>
+                        <a href="{{ qr_url }}" class="btn download-btn" download="ticket_qr_{{ reservation.id }}.png">
+                            ⬇️ {% trans "Download QR Code" %}
+                        </a>
+                    </p>
+                </div>
+            {% else %}
+                <p class="error-msg">{% trans "QR code is not available." %}</p>
+            {% endif %}
+        </div>
+    </section>
+</body>
 </html>

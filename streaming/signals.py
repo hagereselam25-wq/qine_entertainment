@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.db.models import Sum
 
-from .models import UserProfile, StreamingContent, StreamViewLog, StreamingAnalytics
+from .models import UserProfile, StreamingContent, StreamViewLog
 from .utils import convert_video_to_hls
 
 # -------------------- User Profile Signals --------------------

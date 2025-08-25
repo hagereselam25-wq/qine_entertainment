@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
-from .models import Movie, Seat, Reservation, Rating, Transaction
+from .models import Movie, Seat, Reservation, Transaction
 import requests
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
@@ -17,39 +17,26 @@ from django.core.files.storage import default_storage
 
 
 # Home page: shows all available movies (with search)
-@login_required
-def video_detail(request, pk):
-    """Secure access to a single video."""
-    video = get_object_or_404(Video, pk=pk)
 
-    # Access control logic
-    if not video.is_public and video.uploaded_by != request.user and not request.user.is_superuser:
-        return HttpResponseForbidden(_("You don't have permission to view this video."))
-
-    return render(request, 'videos/video_detail.html', {'video': video})
 
 
 from django.shortcuts import render
-from .models import Movie, Rating
+from .models import Movie
 from streaming.models import StreamingContent
 
 def home(request):
     query = request.GET.get('q')
 
-    # Cinema movies
+    # search query for cinema and events
     if query:
         movies = Movie.objects.filter(title__icontains=query)
     else:
         movies = Movie.objects.all()
 
-    # Calculate average rating for cinema movies
-    for movie in movies:
-        ratings = Rating.objects.filter(movie=movie)
-        movie.average_rating = sum(r.rating for r in ratings)/len(ratings) if ratings.exists() else 0
+    # Featured streaming content fetches at least six streaming contents on the home
+    featured_streaming = StreamingContent.objects.order_by('-release_date')[:6]  
 
-    # Featured streaming content
-    featured_streaming = StreamingContent.objects.order_by('-release_date')[:6]  # latest 10
-
+    #renders the home.html template and passes context
     return render(request, 'reservations/home.html', {
         'movies': movies,
         'query': query,
@@ -71,17 +58,23 @@ import requests
 
 
 def seat_selection(request, movie_id):
+   
+    # fetches the movie by movie_id, returns 404 if it doesn’t exist, fetches all seats for that movie and orders them by seat number for display
     movie = get_object_or_404(Movie, id=movie_id)
     seats = Seat.objects.filter(movie=movie).order_by('seat_number')
 
+    #handles form submission and extracts the seat chosen by the user, their name, and email
     if request.method == "POST":
         seat_id = request.POST.get('seat_id')
         name = request.POST.get('name')
         email = request.POST.get('email')
 
-        amount = float(movie.ticket_price)  # Use fixed ticket price
+        amount = float(movie.ticket_price)  
 
         try:
+            #select_for_update() locks the seat row for this transaction to prevent double booking. 
+            # If the seat is already booked, it returns an error.
+
             seat = Seat.objects.select_for_update().get(id=seat_id, movie=movie)
 
             if seat.is_booked:
@@ -90,10 +83,12 @@ def seat_selection(request, movie_id):
                     'seats': seats,
                     'error': _('Seat already booked.')
                 })
-
+            
+            #temporarily marks the seat as booked in the database before payment
             seat.is_booked = True
             seat.save()
 
+            #creates a reservation record with is_paid=False
             reservation = Reservation.objects.create(
                 movie=movie,
                 seat=seat,
@@ -102,6 +97,7 @@ def seat_selection(request, movie_id):
                 is_paid=False
             )
 
+            #creates a transaction record linked to the reservation. tx_ref is a unique identifier sent to Chapa for payment tracking
             tx_ref = f"reservation_{reservation.id}"
 
             Transaction.objects.create(
@@ -407,8 +403,7 @@ def about_view(request):
 
 from django.shortcuts import render
 from .models import Movie
-from django.shortcuts import render
-from .models import Movie
+
 
 def cinema(request):
     query = request.GET.get('q', '')  # get search query from GET

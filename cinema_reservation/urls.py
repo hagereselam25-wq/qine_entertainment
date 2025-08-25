@@ -1,17 +1,15 @@
-# cinema_reservation/urls.py
-
 from django.contrib import admin
 from django.urls import path, include
 
 from django.conf import settings
-from django.conf.urls.static import static  # ✅ Serve media files in development
+from django.conf.urls.static import static  #  Helps us serve media files in development
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('reservations.urls')),  # Your reservation app routes
     path('streaming/', include('streaming.urls', namespace='streaming')),  # Streaming app routes
 
-    # ✅ Add Django i18n URLs for language switching
+    # Django i18n URLs for language switching
     path('i18n/', include('django.conf.urls.i18n')),
 ]
 

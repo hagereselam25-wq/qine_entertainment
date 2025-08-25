@@ -12,14 +12,13 @@
 
 <h1 class="streaming-header">{% trans "Streaming Content" %}</h1>
 <nav class="navbar">
-        <div class="logo">🎬 CINEMA</div>
-        <ul class="nav-links">
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
-            <li><a href="{% url 'streaming:user_profile' %}">Profile</a></li>
-
-        </ul>
-    </nav>
+    <div class="logo">🎬 CINEMA</div>
+    <ul class="nav-links">
+        <li><a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+        <li><a href="{% url 'streaming:user_profile' %}">Profile</a></li>
+    </ul>
+</nav>
 
 <!-- Search & Filters -->
 <div class="streaming-filter-bar">
@@ -32,7 +31,7 @@
     {% endfor %}
   </select>
 
-  <select id="streamingGenre">
+  <select id="streamingGenre" >
     <option value="">{% trans "All Genres" %}</option>
     {% for genre in genres %}
       <option value="{{ genre }}">{{ genre }}</option>
@@ -63,7 +62,7 @@
             data-language="{{ content.language }}">
           
           {% if content.thumbnail %}
-            <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}" />
+            <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}" class="streaming-thumbnail" />
           {% else %}
             <div class="streaming-thumbnail-placeholder"></div>
           {% endif %}
@@ -93,5 +92,42 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/scripts.js' %}" defer></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("streamingSearch");
+  const categoryFilter = document.getElementById("streamingCategory");
+  const genreFilter = document.getElementById("streamingGenre");
+  const languageFilter = document.getElementById("streamingLanguage");
+  const filterBtn = document.getElementById("streamingFilterBtn");
+  const cards = document.querySelectorAll(".streaming-card");
+
+  function applyFilters() {
+    const search = searchInput.value.toLowerCase().trim();
+    const category = categoryFilter.value;
+    const genre = genreFilter.value;
+    const language = languageFilter.value;
+
+cards.forEach(card => {
+      const title = card.dataset.title;
+      const cardCategory = card.dataset.category;
+      const cardGenre = card.dataset.genre;
+      const cardLanguage = card.dataset.language;
+
+      const matchSearch = !search || title.includes(search);
+      const matchCategory = !category || cardCategory === category;
+      const matchGenre = !genre || cardGenre === genre;
+      const matchLanguage = !language || cardLanguage === language;
+
+      if (matchSearch && matchCategory && matchGenre && matchLanguage) {
+        card.style.display = "block";
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }
+
+  searchInput.addEventListener("input", applyFilters);
+  filterBtn.addEventListener("click", applyFilters);
+});
+</script>
 {% endblock %}

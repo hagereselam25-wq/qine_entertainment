@@ -15,13 +15,15 @@ urlpatterns = [
     path('', views.streaming_home, name='streaming_home'),
     path('watch/<int:content_id>/', views.watch_video, name='watch_video'),
     path('watch/<int:content_id>/report/', views.report_watch_time, name='report_watch_time'),
+    path('profile/', views.user_profile, name='user_profile'),
+    path('clear-watch-history/', views.clear_watch_history, name='clear_watch_history'),
 
     # Authentication
     path('signup/', views.user_signup, name='signup'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
     path('profile/', user_profile, name='user_profile'),
-
+    path('profile/clear-history/', views.clear_watch_history, name='clear_watch_history'),
     # Password reset (custom templates inside streaming/)
     path(
         "password-reset/",

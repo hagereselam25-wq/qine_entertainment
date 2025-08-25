@@ -1,4 +1,23 @@
+    {% load i18n static %}
+      <head>  
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% trans "Thank You!" %}</title>
+
+    <!-- Link main CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>{% trans "Thank You" %}</title>  
+</head> 
+
 <h2>{% trans "Payment Successful!" %}</h2>  
+    <nav class="navbar">
+        <div class="logo">Cinema</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">{% trans "Login" %}</a></li>
+        </ul>
+    </nav>
+
 <p>  
   {% blocktrans with username=reservation.user seat=reservation.seat.seat_number %}  
     Thank you, {{ username }}. Your seat {{ seat }} is confirmed.  

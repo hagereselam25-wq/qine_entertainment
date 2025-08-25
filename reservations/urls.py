@@ -1,6 +1,8 @@
+# our urls.py maps URLs to views — tells Django which function to run when a user visits a certain URL
 from django.urls import path
 from . import views
 
+# our path defines 'url-pattern/' → the URL users type or click. views.view_function → the function that handles the request. name='route_name' → a unique identifier for reverse URL lookup (useful in templates and redirects).
 urlpatterns = [
     path('', views.home, name='home'),
     path('movies/', views.movie_list, name='view_movies'),
@@ -19,5 +21,4 @@ urlpatterns = [
     path("contact/", views.contact_view, name="contact"),
     path("cinema/", views.cinema, name="cinema"),
 
-    # Streaming subscription payment URLs
 ]

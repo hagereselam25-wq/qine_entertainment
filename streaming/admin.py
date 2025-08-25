@@ -7,7 +7,7 @@ from django.shortcuts import render
 import csv
 from django.utils.translation import gettext_lazy as _
 
-from .models import StreamingContent, StreamingSubscription, StreamViewLog, StreamingAnalytics
+from .models import StreamingContent, StreamingSubscription, StreamViewLog
 
 # ------------------- Streaming Content Admin ------------------- 
 from django.contrib import admin
@@ -123,62 +123,11 @@ class StreamViewLogAdmin(admin.ModelAdmin):
         return obj.country.name if obj.country else _('Unknown')
     country_display.short_description = _('Country')
 
-# ------------------- Streaming Analytics Admin -------------------
 from django.contrib import admin
-from django.shortcuts import render
-from django.db.models import Sum, Count, Avg
-from django.utils.translation import gettext_lazy as _
+from .models import StreamingContent, StreamingRating
 
-from .models import StreamingAnalytics, StreamViewLog, StreamingContent, StreamingRating
-
-@admin.register(StreamingAnalytics)
-class StreamingAnalyticsAdmin(admin.ModelAdmin):
-    change_list_template = "admin/streaming/analytics.html"  # Your template
-
-    def has_module_permission(self, request):
-        return True  # Show in Streaming section
-
-    def changelist_view(self, request, extra_context=None):
-        logs = StreamViewLog.objects.all()
-        total_views = logs.aggregate(total=Sum('views'))['total'] or 0
-        unique_viewers = logs.values('user').distinct().count()
-        total_watch_time_seconds = logs.aggregate(total=Sum('watch_time_seconds'))['total'] or 0
-        avg_watch_time_per_view = (total_watch_time_seconds / total_views) if total_views else 0
-
-        # Top regions
-        top_regions = {}
-        region_data = logs.values('country').annotate(count=Count('id')).order_by('-count')[:5]
-        total_region_count = sum(item['count'] for item in region_data) or 1
-        for item in region_data:
-            country = item['country'] or _('Unknown')
-            percent = round(item['count'] / total_region_count * 100, 2)
-            top_regions[country] = percent
-
-        # ------------------------
-        # Rating Analytics
-        # ------------------------
-        rating_data = StreamingContent.objects.annotate(
-            avg_rating=Avg('ratings__rating'),
-            total_ratings=Count('ratings')
-        ).order_by('-avg_rating')[:10]  # top 10 by avg_rating
-
-        ratings_stats = []
-        for content in rating_data:
-            ratings_stats.append({
-                'title': content.title,
-                'avg_rating': round(content.avg_rating or 0, 2),
-                'total_ratings': content.total_ratings,
-            })
-
-        stats = {
-            'total_views': total_views,
-            'unique_viewers': unique_viewers,
-            'total_watch_time_hours': round(total_watch_time_seconds / 3600, 2),
-            'avg_watch_time_per_view_minutes': round(avg_watch_time_per_view / 60, 2),
-            'top_regions': top_regions,
-            'ratings_stats': ratings_stats,  # Add rating analytics
-        }
-
-        extra_context = extra_context or {}
-        extra_context.update({'stats': stats})
-        return render(request, "admin/streaming/analytics.html", extra_context)
+@admin.register(StreamingRating)
+class StreamingRatingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'content', 'rating')
+    list_filter = ('rating',)
+    search_fields = ('userusername', 'contenttitle')

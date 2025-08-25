@@ -4,88 +4,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
   <meta charset="UTF-8">
   <title>{{ content.title }}</title>
-  
-  <style>
-    body {
-      background-color: #000;
-      color: #f5f5f5;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .main-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1.5rem;
-    }
-
-    #video-player {
-      max-width: 100%;
-      border-radius: 8px;
-      background-color: #000;
-    }
-
-    .rating-container {
-      margin-top: 0.8rem;
-      text-align: center;
-      font-size: 0.9rem;
-    }
-
-    #star-rating {
-      font-size: 1.8rem;
-      cursor: pointer;
-      color: #555; /* default gray */
-      transition: transform 0.2s;
-    }
-
-    #star-rating .star:hover {
-      color: #ffd700; /* yellow on hover */
-      transform: scale(1.3);
-    }
-
-    #rating-value {
-      margin-left: 0.5rem;
-      font-size: 1rem;
-      color: #ffcc00;
-    }
-
-    .info-container {
-      margin-top: 0.8rem;
-      text-align: center;
-      font-size: 0.85rem;
-    }
-
-    .info-container h2 {
-      margin: 0.2rem 0;
-      font-size: 1.5rem;
-      color: #ffcc00;
-    }
-
-    .info-container p {
-      margin: 0.15rem 0;
-      font-size: 0.9rem;
-      color: #ddd;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
+  <!-- Navbar -->
   <nav class="navbar">
         <div class="logo">🎬 CINEMA</div>
         <ul class="nav-links">
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
-            <li><a href="{% url 'streaming:user_profile' %}">Profile</a></li>
-
+            <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
+            <li><a href="{% url 'cinema' %}">{% trans "Events/Cinema" %}</a></li>
+            <li><a href="{% url 'streaming:user_profile' %}">{% trans "Profile" %}</a></li>
         </ul>
     </nav>
+
   <div class="main-container">
 
     {% if video_url %}
+      <!-- Video Player -->
       <video id="video-player" width="800" height="450" controls controlsList="nodownload noplaybackrate" oncontextmenu="return false;" preload="metadata" playsinline>
         {% if not is_hls %}
           <source src="{{ video_url }}" type="video/mp4">
@@ -96,6 +33,30 @@
       {% if is_hls %}
         <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
       {% endif %}
+
+      <!-- Rating Section -->
+      <div class="rating-container">
+        <h3>{% trans "Rate this video:" %}</h3>
+        <div id="star-rating">
+          {% for i in "12345" %}
+            <span class="star" data-value="{{ i }}">&#9733;</span>
+          {% endfor %}
+        </div>
+        <span id="rating-value">0</span>
+
+        <!-- Hidden Form -->
+        <form id="rating-form" method="post" style="display:none;">
+          {% csrf_token %}
+          {{ rating_form.rating }}
+        </form>
+      </div>
+
+      <!-- Info Section -->
+      <div class="info-container">
+        <h2>{{ content.title }}</h2>
+        <p>{% trans "Category:" %} {{ content.get_category_display }}</p>
+        <p>{% trans "Duration:" %} {{ content.duration_minutes }} {% trans "minutes" %}</p>
+      </div>
 
       <script>
       (function() {
@@ -144,10 +105,10 @@
         }
 
         video.addEventListener("play", () => { isPlaying = true; sendStartIfNeeded(); lastTime = video.currentTime; });
-        video.addEventListener("pause", () => { isPlaying = false; flush(); });
-        video.addEventListener("timeupdate", () => {
 
-if (!isPlaying) return;
+video.addEventListener("pause", () => { isPlaying = false; flush(); });
+        video.addEventListener("timeupdate", () => {
+          if (!isPlaying) return;
           const now = video.currentTime;
           const delta = now - lastTime;
           if (delta > 0 && delta < 5) accumulatedSeconds += delta;
@@ -159,31 +120,8 @@ if (!isPlaying) return;
         window.addEventListener("beforeunload", () => flush(true));
         setInterval(() => flush(), 10000);
       })();
-      </script>
 
-      <!-- Rating Section -->
-      <div class="rating-container">
-        <div id="star-rating">
-          {% for i in "12345" %}
-            <span class="star" data-value="{{ i }}">&#9733;</span>
-          {% endfor %}
-          <span id="rating-value">0</span>
-        </div>
-
-        <form id="rating-form" method="post" style="display:none;">
-          {% csrf_token %}
-          {{ rating_form.rating }}
-        </form>
-      </div>
-
-      <!-- Info Section -->
-      <div class="info-container">
-        <h2>{{ content.title }}</h2>
-        <p>{% trans "Category:" %} {{ content.get_category_display }}</p>
-        <p>{% trans "Duration:" %} {{ content.duration_minutes }} {% trans "minutes" %}</p>
-      </div>
-
-      <script>
+      // ⭐ Rating Script
       document.addEventListener("DOMContentLoaded", function() {
         const stars = document.querySelectorAll('#star-rating .star');
         const ratingInput = document.querySelector('#rating-form input[name="rating"]');
@@ -197,14 +135,14 @@ if (!isPlaying) return;
         }
 
         // Initial display
-        highlightStars(ratingInput.value || 0);
+        highlightStars(ratingInput?.value || 0);
 
         stars.forEach(star => {
           const starValue = parseInt(star.dataset.value);
 
           // Hover effect
           star.addEventListener('mouseover', () => highlightStars(starValue));
-          star.addEventListener('mouseout', () => highlightStars(ratingInput.value || 0));
+          star.addEventListener('mouseout', () => highlightStars(ratingInput?.value || 0));
 
           // Click effect
           star.addEventListener('click', () => {
@@ -217,7 +155,7 @@ if (!isPlaying) return;
                 "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
                 "Content-Type": "application/x-www-form-urlencoded"
               },
-              body: rating=${starValue}
+              body: "rating=" + starValue
             })
             .then(resp => resp.json())
             .then(data => {
@@ -232,7 +170,6 @@ if (!isPlaying) return;
         });
       });
       </script>
-
     {% else %}
       <p>{% trans "No video available." %}</p>
     {% endif %}

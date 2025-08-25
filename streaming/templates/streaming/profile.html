@@ -7,7 +7,6 @@
     <ul class="nav-links">
         <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
         <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-
         <li><a href="{% url 'streaming:logout' %}">{% trans "Logout" %}</a></li>
     </ul>
 </div>
@@ -15,50 +14,92 @@
 <div class="profile-container">
 
     <!-- Profile Card -->
-    <div class="profile-card">
-        <img src="{{ profile.profile_picture.url }}" alt="{% trans 'Profile Picture' %}">
-        <div class="profile-info">
+    <div class="profile-card card shadow-lg rounded-3 p-4 mb-4">
+        <img src="{{ profile.profile_picture.url }}" alt="{% trans 'Profile Picture' %}" class="rounded-circle mb-3" style="width:120px;height:120px;">
+        <div class="profile-info text-center">
             <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
-            <form method="post" enctype="multipart/form-data" class="profile-form">
+            <form method="post" enctype="multipart/form-data" class="profile-form mt-2">
                 {% csrf_token %}
                 {{ form.profile_picture }}
-                <button type="submit" class="btn-small">{% trans "Update Picture" %}</button>
+                <button type="submit" class="btn btn-primary btn-sm mt-2">{% trans "Update Picture" %}</button>
             </form>
         </div>
     </div>
 
     <!-- Stats -->
-    <div class="stats-card">
-        <h3>{% trans "Stats" %}</h3>
-        <p><strong>{% trans "Total Videos Watched:" %}</strong> {{ total_videos }}</p>
-        <p><strong>{% trans "Total Watch Time:" %}</strong> {{ total_watch_time }} {% trans "minutes" %}</p>
+    <div class="stats-card card shadow-lg rounded-3 p-4 mb-4">
+        <h3 class="mb-3">{% trans "Stats" %}</h3>
+        <p><strong>{% trans "Total Videos Watched:" %}</strong> <span id="total-videos">{{ total_videos }}</span></p>
+        <p><strong>{% trans "Total Watch Time:" %}</strong> <span id="total-watch-time">{{ total_watch_time }}</span> {% trans "minutes" %}</p>
     </div>
 
     <!-- Watch History -->
-    <div class="history-card">
-        <h3>{% trans "Watch History" %}</h3>
-        {% if watch_history %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>{% trans "Video Title" %}</th>
-                        <th>{% trans "Watch Date" %}</th>
-                        <th>{% trans "Duration Watched" %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for history in watch_history %}
-                    <tr>
-                        <td>{{ history.video_title }}</td>
-                        <td>{{ history.watch_date|date:"M d, Y H:i" }}</td>
-                        <td>{{ history.duration_watched }} {% trans "min" %}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>{% trans "No watch history found." %}</p>
+    <div class="history-card card shadow-lg rounded-3 p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>{% trans "Watch History" %}</h3>
+            {% if watch_history %}
+            <form id="clear-history-form" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">Clear History</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <table class="table table-striped" id="history-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Video Title" %}</th>
+                    <th>{% trans "Watch Date" %}</th>
+                    <th>{% trans "Duration Watched" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for history in watch_history %}
+                <tr>
+                    <td>{{ history.video_title }}</td>
+                    <td>{{ history.watch_date|date:"M d, Y H:i" }}</td>
+                    <td>{{ history.duration_watched }} {% trans "min" %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not watch_history %}
+            <p id="no-history">{% trans "No watch history found." %}</p>
         {% endif %}
     </div>
-
 </div>
+
+<!-- Confirmation JS + AJAX for updating table -->
+<script>
+document.getElementById('clear-history-form')?.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!confirm('Are you sure you want to clear your watch history? This cannot be undone.')){
+        return;
+    }
+
+    fetch("{% url 'streaming:clear_watch_history' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Accept": "application/json",
+        },
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            // Clear table
+            const tbody = document.querySelector('#history-table tbody');
+            tbody.innerHTML = '';
+            document.getElementById('total-videos').innerText = 0;
+            document.getElementById('total-watch-time').innerText = 0;
+            if(!document.getElementById('no-history')){
+                const p = document.createElement('p');
+                p.id = 'no-history';
+                p.innerText = 'No watch history found.';
+                document.querySelector('.history-card').appendChild(p);
+            }
+        }
+    })
+    .catch(err => console.error(err));
+});
+</script>
