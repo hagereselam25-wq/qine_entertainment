@@ -24,6 +24,7 @@ urlpatterns = [
     path('logout/', views.user_logout, name='logout'),
     path('profile/', user_profile, name='user_profile'),
     path('profile/clear-history/', views.clear_watch_history, name='clear_watch_history'),
+   
     # Password reset (custom templates inside streaming/)
     path(
         "password-reset/",

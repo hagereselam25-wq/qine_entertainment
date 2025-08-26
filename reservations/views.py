@@ -6,23 +6,13 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.contrib.auth.models import User
 from .models import Movie, Seat, Reservation, Transaction
 import requests
 from django.conf import settings
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
-from django.utils import timezone
+from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
-from django.core.files.storage import default_storage
-
-
-# Home page: shows all available movies (with search)
-
-
-
-from django.shortcuts import render
-from .models import Movie
 from streaming.models import StreamingContent
+
 
 def home(request):
     query = request.GET.get('q')
@@ -33,7 +23,7 @@ def home(request):
     else:
         movies = Movie.objects.all()
 
-    # Featured streaming content fetches at least six streaming contents on the home
+    # featured streaming content fetches at least six streaming contents on the home
     featured_streaming = StreamingContent.objects.order_by('-release_date')[:6]  
 
     #renders the home.html template and passes context
@@ -44,10 +34,7 @@ def home(request):
         'featured_streaming': featured_streaming,  # featured streaming content
     })
 
-# Movie list page
-def movie_list(request):
-    movies = Movie.objects.all()
-    return render(request, 'reservations/movie_list.html', {'movies': movies})
+
 
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -57,24 +44,24 @@ from reservations.models import Movie, Seat, Reservation, Transaction
 import requests
 
 
+
+import uuid  
+
 def seat_selection(request, movie_id):
-   
     # fetches the movie by movie_id, returns 404 if it doesn’t exist, fetches all seats for that movie and orders them by seat number for display
     movie = get_object_or_404(Movie, id=movie_id)
     seats = Seat.objects.filter(movie=movie).order_by('seat_number')
 
-    #handles form submission and extracts the seat chosen by the user, their name, and email
+    # handles form submission and extracts the seat chosen by the user, their name, and email
     if request.method == "POST":
         seat_id = request.POST.get('seat_id')
         name = request.POST.get('name')
         email = request.POST.get('email')
-
         amount = float(movie.ticket_price)  
 
         try:
-            #select_for_update() locks the seat row for this transaction to prevent double booking. 
+            # select_for_update() locks the seat row for this transaction to prevent double booking. 
             # If the seat is already booked, it returns an error.
-
             seat = Seat.objects.select_for_update().get(id=seat_id, movie=movie)
 
             if seat.is_booked:
@@ -83,12 +70,12 @@ def seat_selection(request, movie_id):
                     'seats': seats,
                     'error': _('Seat already booked.')
                 })
-            
-            #temporarily marks the seat as booked in the database before payment
+
+            # temporarily marks the seat as booked in the database before payment
             seat.is_booked = True
             seat.save()
 
-            #creates a reservation record with is_paid=False
+            # creates a reservation record with is_paid=False
             reservation = Reservation.objects.create(
                 movie=movie,
                 seat=seat,
@@ -97,9 +84,10 @@ def seat_selection(request, movie_id):
                 is_paid=False
             )
 
-            #creates a transaction record linked to the reservation. tx_ref is a unique identifier sent to Chapa for payment tracking
-            tx_ref = f"reservation_{reservation.id}"
+            # ✅ Generate a unique transaction reference with UUID
+            tx_ref = f"reservation_{reservation.id}_{uuid.uuid4().hex[:8]}"
 
+            # creates a transaction record linked to the reservation.
             Transaction.objects.create(
                 reservation=reservation,
                 transaction_id=tx_ref,
@@ -126,6 +114,10 @@ def seat_selection(request, movie_id):
 
             chapa_response = requests.post(settings.CHAPA_BASE_URL, json=chapa_data, headers=headers)
             response_data = chapa_response.json()
+
+            # Debugging logs
+            print("Chapa Status Code:", chapa_response.status_code)
+            print("Chapa Response Data:", response_data)
 
             if chapa_response.status_code == 200 and response_data.get("status") == "success":
                 return redirect(response_data["data"]["checkout_url"])
@@ -157,7 +149,6 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage
 from django.shortcuts import render
-from django.utils.translation import gettext as _
 from io import BytesIO
 import qrcode
 from .models import Transaction
@@ -174,7 +165,7 @@ def payment_success(request):
     headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
 
     try:
-        response = requests.get(url, headers=headers, timeout=15)  # ⏱️ added timeout
+        response = requests.get(url, headers=headers, timeout=15)  #   timeout
         response.raise_for_status()
         chapa_data = response.json()
     except requests.exceptions.Timeout:
@@ -206,14 +197,14 @@ def payment_success(request):
         transaction.status = "success"
         transaction.save()
 
-        # ✅ Generate QR Code
+        #  Generate QR Code
         qr = qrcode.make(_(f"Reservation ID: {reservation.id} - Seat: {reservation.seat.seat_number}"))
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
         reservation.qr_code.save(f"qr_{reservation.id}.png", ContentFile(buffer.getvalue()))
         buffer.close()
 
-    # ✅ Send confirmation email (only once)
+    #  Send confirmation email (only once)
     if not reservation.email_sent:
         subject = _("🎟 Your Cinema Ticket Confirmation")
         message = _(f"Dear {reservation.user},\n\nYour ticket has been confirmed. "
@@ -232,6 +223,7 @@ def payment_success(request):
         "qr_url": reservation.qr_code.url if reservation.qr_code else None,
     })
 
+
 # Ticket confirmation page
 def ticket_confirmation(request, ticket_id):
     reservation = get_object_or_404(Reservation, id=ticket_id)
@@ -240,6 +232,7 @@ def ticket_confirmation(request, ticket_id):
     return render(request, 'reservations/ticket_confirmation.html', {
         'reservation': reservation
     })
+
 
 import base64
 from io import BytesIO
@@ -280,7 +273,7 @@ def payment_verify(request):
     result = response.json()
 
     if result.get("status") == "success" and result["data"]["status"] == "success":
-        # ✅ Update reservation and transaction
+        # Update reservation and transaction
         reservation.is_paid = True
 
         # Generate QR code
@@ -324,42 +317,6 @@ def payment_cancel(request):
     return render(request, 'reservations/payment_cancel.html')
 
 
-# Admin dashboard view
-@login_required
-def admin_dashboard(request):
-    if not request.user.is_staff:
-        return redirect('admin_login')
-    movies = Movie.objects.all()
-    reservations = Reservation.objects.select_related('movie', 'seat').all().order_by('-id')
-    seats = Seat.objects.select_related('movie').all().order_by('movie__title', 'seat_number')
-
-    return render(request, 'reservations/admin_dashboard.html', {
-        'movies': movies,
-        'reservations': reservations,
-        'seats': seats
-    })
-
-
-# Admin login view
-def admin_login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-
-        if user is not None and user.is_staff:
-            login(request, user)
-            return redirect('admin_dashboard')
-        else:
-            messages.error(request, _('Invalid credentials or not authorized.'))
-
-    return render(request, 'reservations/admin_login.html')
-
-
-# Admin logout view
-def admin_logout(request):
-    logout(request)
-    return redirect('home')
 
 # Thank you page after successful payment
 def thank_you(request):
@@ -385,10 +342,10 @@ def contact_view(request):
                 subject=f"Feedback from {name}",
                 message=f"Sender: {name}\nEmail: {email}\n\nFeedback:\n{feedback}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.DEFAULT_FROM_EMAIL],  # your host email
+                recipient_list=[settings.DEFAULT_FROM_EMAIL], 
                 fail_silently=False,
             )
-            # Pass a flag to trigger JS alert
+
             return render(request, 'reservations/contact.html', {'success': True})
         else:
             messages.error(request, "Please fill in all fields.")

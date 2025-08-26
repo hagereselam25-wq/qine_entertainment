@@ -1,35 +1,13 @@
 import uuid
-from django.core.files.base import ContentFile
+import os
+import json
 import requests
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, FileResponse, JsonResponse, HttpResponseBadRequest
-from django.core.mail import EmailMessage
-from django.conf import settings
-from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-from io import BytesIO
-from datetime import timedelta
-import time
-import hmac
-import hashlib
-import os
 import qrcode
-import json
-
-import uuid
-import json
-import os
-import time
-import hmac
-import hashlib
 from io import BytesIO
 from datetime import timedelta
 
-import requests
-import qrcode
-
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, FileResponse, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage
 from django.conf import settings
@@ -56,16 +34,6 @@ from .forms import StreamingSubscriptionForm, CustomUserSignupForm, ProfileUpdat
 from .utils import generate_signed_url
 
 
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.urls import reverse
-from django.contrib.auth.forms import UserCreationForm
-from django import forms
-from django.contrib.auth.models import User
-from django.db.models import F, Sum, Count
-
 from .models import (
     StreamingSubscription, StreamingContent,
     Transaction, StreamViewLog, UserProfile
@@ -83,7 +51,6 @@ SUBSCRIPTION_PRICES = {
 
 # ---------------------------
 # Subscription and Payment Views
-# ---------------------------
 def create_subscription(request):
     if request.method == 'POST':
         form = StreamingSubscriptionForm(request.POST)
@@ -179,9 +146,7 @@ def subscription_thankyou(request):
     subscription = StreamingSubscription.objects.filter(chapa_tx_ref=tx_ref).first()
     return render(request, 'streaming/thankyou.html', {'subscription': subscription})
 
-# ---------------------------
-# User Authentication Views
-# ---------------------------
+# user authentication views
 def user_signup(request):
     if request.method == 'POST':
         form = CustomUserSignupForm(request.POST)
@@ -267,7 +232,7 @@ def profile(request):
     return render(request, 'streaming/profile.html', {'subscription': subscription})
 
 # ---------------------------
-# Streaming Views with Metrics
+# streaming views with metrics
 # ---------------------------from django.db.models import Q
 from collections import defaultdict
 

@@ -4,26 +4,17 @@ from django.utils.html import format_html
 from django.http import HttpResponse
 from django.urls import path
 from django.shortcuts import render
-import csv
 from django.utils.translation import gettext_lazy as _
+import csv
 
 from .models import StreamingContent, StreamingSubscription, StreamViewLog
 
-# ------------------- Streaming Content Admin ------------------- 
-from django.contrib import admin
-from django.utils.html import format_html
-from django.utils.translation import gettext_lazy as _
-from django.urls import path
-from django.http import HttpResponse
-import csv
-from django.db.models import Sum
-from .models import StreamingContent, StreamViewLog
 
 @admin.register(StreamingContent)
 class StreamingContentAdmin(admin.ModelAdmin):
     list_display = (
         'title', 'category', 'total_plays', 'unique_viewers',
-        'average_rating',  # <-- Added Average Rating column
+        'average_rating',  # added average rating column
         'total_watch_time_minutes_display', 'completion_rate', 'release_date',
         'hls_folder', 'download_analytics_csv'
     )
@@ -62,7 +53,6 @@ class StreamingContentAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = f'attachment; filename="{content.title}_analytics.csv"'
         writer = csv.writer(response)
 
-        # ✅ Write aggregated headers
         writer.writerow([
             _('Title'),
             _('Category'),
@@ -74,7 +64,6 @@ class StreamingContentAdmin(admin.ModelAdmin):
             _('Release Date')
         ])
 
-        # ✅ Write single aggregated row from StreamingContent
         total_watch_time_minutes = StreamViewLog.objects.filter(content=content).aggregate(
             total=Sum('watch_time_seconds')
         )['total'] or 0
@@ -93,7 +82,6 @@ class StreamingContentAdmin(admin.ModelAdmin):
         return response
 
 
-# -------------------- Streaming Subscription Admin --------------------
 @admin.register(StreamingSubscription)
 class StreamingSubscriptionAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'email', 'subscription_type', 'amount', 'is_paid', 'access_expires_at')
@@ -108,7 +96,6 @@ class StreamingSubscriptionAdmin(admin.ModelAdmin):
         return _("No QR code")
     qr_preview.short_description = _("QR Code")
 
-# ------------------- Stream View Log Admin -------------------
 @admin.register(StreamViewLog)
 class StreamViewLogAdmin(admin.ModelAdmin):
     list_display = ('user', 'content', 'views', 'watch_time_minutes_display', 'last_viewed', 'country_display')
@@ -131,3 +118,4 @@ class StreamingRatingAdmin(admin.ModelAdmin):
     list_display = ('user', 'content', 'rating')
     list_filter = ('rating',)
     search_fields = ('userusername', 'contenttitle')
+    

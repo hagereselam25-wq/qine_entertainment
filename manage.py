@@ -3,6 +3,7 @@
 import os
 import sys
 
+#Sets the environment variable DJANGO_SETTINGS_MODULE to point to your settings file (cinema_reservation/settings.py).
 
 def main():
     """Run administrative tasks."""

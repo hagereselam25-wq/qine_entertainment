@@ -15,7 +15,6 @@ SUBSCRIPTION_CHOICES = (
     ('annual', _('Annual')),
 )
 
-# -------------------- Transactions --------------------
 class Transaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tx_ref = models.CharField(_("Transaction Reference"), max_length=100, unique=True)
@@ -30,7 +29,6 @@ class Transaction(models.Model):
         return f"{_('Transaction')} {self.tx_ref} - {self.status}"
 
 
-# -------------------- Streaming Subscription --------------------
 class StreamingSubscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     full_name = models.CharField(_("Full Name"), max_length=100)
@@ -50,7 +48,6 @@ class StreamingSubscription(models.Model):
         return f"{self.full_name} - {self.subscription_type}"
 
 
-# -------------------- Streaming Content --------------------
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -71,7 +68,6 @@ from django.dispatch import receiver
 from django.conf import settings
 from .utils import convert_video_to_hls
 
-# ------------------- Video Validator -------------------
 ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.flv', '.wmv', '.webm']
 
 def validate_video_extension(value):
@@ -80,7 +76,6 @@ def validate_video_extension(value):
         raise ValidationError(f"Unsupported video format '{ext}'. Allowed: {ALLOWED_VIDEO_EXTENSIONS}")
 
 
-# ------------------- StreamingContent Model -------------------
 class StreamingContent(models.Model):
     CATEGORY_CHOICES = [
         ('movie', _('Movie')),
@@ -203,12 +198,11 @@ class StreamingContent(models.Model):
         return self.title
 
 
-# ------------------- HLS Conversion Signal -------------------
 @receiver(post_save, sender=StreamingContent)
 def convert_video_to_hls_signal(sender, instance, created, **kwargs):
-    """
-    Automatically convert uploaded videos to HLS if not already converted.
-    """
+   
+    # automatically convert uploaded videos to HLS if not already converted.
+
     if instance.video_file and not instance.hls_folder:
         try:
             video_path = instance.video_file.path
@@ -226,7 +220,6 @@ def convert_video_to_hls_signal(sender, instance, created, **kwargs):
 
 
 
-# -------------------- Stream View Log --------------------
 class StreamViewLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.ForeignKey(StreamingContent, on_delete=models.CASCADE)
@@ -242,7 +235,6 @@ class StreamViewLog(models.Model):
         return f"{self.user.username} - {self.content.title}"
 
 
-# -------------------- User Profile --------------------
 def profile_image_path(instance, filename):
     ext = filename.split('.')[-1]
     filename = f"profile_{instance.user.id}.{ext}"
@@ -271,7 +263,6 @@ class UserProfile(models.Model):
         return self.user.username
 
 
-# -------------------- Watch History --------------------
 class WatchHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     video_title = models.CharField(_("Video Title"), max_length=255)
@@ -282,7 +273,6 @@ class WatchHistory(models.Model):
         return f"{self.user.username} - {self.video_title}"
 
 
-# -------------------- Streaming Analytics --------------------
 
 
 # models.py
@@ -297,4 +287,4 @@ class StreamingRating(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'content')  # One rating per user per video
+        unique_together = ('user', 'content')  

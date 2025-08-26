@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-# our model defines the tables needed our reservation flow: Movie → Seat → Reservation → Transaction
+# our model defines the tables needed for our reservation flow: Movie → Seat → Reservation → Transaction
 
 class Movie(models.Model):
     title = models.CharField(_("Title"), max_length=100)

@@ -9,7 +9,6 @@ from django.db.models import Sum
 from .models import UserProfile, StreamingContent, StreamViewLog
 from .utils import convert_video_to_hls
 
-# -------------------- User Profile Signals --------------------
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -20,8 +19,6 @@ def save_user_profile(sender, instance, **kwargs):
     instance.userprofile.save()
 
 
-# -------------------- HLS Conversion Signal --------------------
-# ✅ Updated signal: now accepts all supported video formats
 import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -31,9 +28,9 @@ from .utils import convert_video_to_hls
 
 @receiver(post_save, sender=StreamingContent)
 def convert_video_to_hls_signal(sender, instance, created, **kwargs):
-    """
-    Auto-convert uploaded videos to HLS with verbose debug output.
-    """
+
+    #auto-convert uploaded videos to HLS with verbose debug output.
+    
     if instance.video_file and not instance.hls_folder:
         try:
             video_path = instance.video_file.path
@@ -49,7 +46,7 @@ def convert_video_to_hls_signal(sender, instance, created, **kwargs):
         except Exception as e:
             print("⚠️ HLS conversion failed:", e)
             
-            # -------------------- Update Total Watch Time --------------------
+
 @receiver(post_save, sender=StreamViewLog)
 def update_total_watch_time(sender, instance, **kwargs):
     """
@@ -64,12 +61,12 @@ def update_total_watch_time(sender, instance, **kwargs):
     )
 
 
-# -------------------- Update Streaming Analytics --------------------
+
 @receiver(post_save, sender=StreamViewLog)
 def update_streaming_analytics(sender, instance, **kwargs):
     content = instance.content
 
-    # Aggregate data from StreamViewLog
+    # aggregate data from StreamViewLog
     agg = StreamViewLog.objects.filter(content=content).aggregate(
         total_views=Sum('views'),
         total_watch_time=Sum('watch_time_seconds')
@@ -78,7 +75,7 @@ def update_streaming_analytics(sender, instance, **kwargs):
     total_views = agg['total_views'] or 0
     total_watch_time = agg['total_watch_time'] or 0
 
-    # Compute average completion rate
+    # compute average completion rate
     if total_views > 0 and content.duration_minutes > 0:
         average_completion_rate = min(
             100.0,
