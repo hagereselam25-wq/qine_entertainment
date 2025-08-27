@@ -1,0 +1,65 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block content %}
+  <h1 style="margin-bottom:20px;">📊 Streaming Analytics Dashboard</h1>
+
+  <div id="viewsChart" style="width:100%;height:400px;"></div>
+  <div id="completionChart" style="width:100%;height:400px;margin-top:40px;"></div>
+  <div id="usersPieChart" style="width:100%;height:400px;margin-top:40px;"></div>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+    // Django context data
+    var labels = {{ labels|safe }};
+    var views = {{ views|safe }};
+    var uniqueUsers = {{ unique_users|safe }};
+    var completionRates = {{ completion_rates|safe }};
+
+    // Chart 1: Views per Content (Bar)
+    var trace1 = {
+      x: labels,
+      y: views,
+      type: 'bar',
+      marker: {color: '#636EFA'},
+      name: 'Total Views'
+    };
+
+    Plotly.newPlot('viewsChart', [trace1], {
+      title: 'Total Views per Content',
+      xaxis: { title: 'Content Title' },
+      yaxis: { title: 'Views' }
+    });
+
+    // Chart 2: Completion Rate (Line)
+    var trace2 = {
+      x: labels,
+      y: completionRates,
+      type: 'scatter',
+      mode: 'lines+markers',
+      line: {color: '#EF553B'},
+      name: 'Completion Rate (%)'
+    };
+
+    Plotly.newPlot('completionChart', [trace2], {
+      title: 'Completion Rate per Content',
+      xaxis: { title: 'Content Title' },
+      yaxis: { title: 'Completion Rate (%)', range: [0, 100] }
+    });
+
+    // Chart 3: Unique Users (Pie)
+    var trace3 = {
+      labels: labels,
+      values: uniqueUsers,
+      type: 'pie',
+      textinfo: 'label+percent',
+      marker: {
+        colors: ['#00CC96','#AB63FA','#FFA15A','#19D3F3','#FF6692','#B6E880']
+      }
+    };
+
+    Plotly.newPlot('usersPieChart', [trace3], {
+      title: 'Unique Users Distribution'
+    });
+  </script>
+{% endblock %}

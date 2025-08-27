@@ -288,3 +288,9 @@ class StreamingRating(models.Model):
 
     class Meta:
         unique_together = ('user', 'content')  
+
+class StreamingAnalyticsProxy(StreamingContent):
+    class Meta:
+        proxy = True
+        verbose_name = "Streaming Analytics"
+        verbose_name_plural = "Streaming Analytics"

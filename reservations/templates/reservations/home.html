@@ -1,183 +1,165 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cinema Reservation</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <script src="{% static 'js/scripts.js' %}" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-</head>
-<body>
+{% load static %}  
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Cinema Reservation</title>  
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">  
+    <script src="{% static 'js/scripts.js' %}" defer></script>  
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />  
+</head>  
+<body>  
 
-<!-- Navbar -->
-    <nav class="navbar">
-        <div class="logo">🎬 CINEMA</div>
-        <ul class="nav-links">
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
-            <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
-            <li><a href="{% url 'about' %}">About</a></li>
-            <li><a href="{% url 'contact' %}">Contact</a></li>
-            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
-            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
-        </ul>
-    </nav>
+<!-- Navbar -->  
+<nav class="navbar">  
+    <div class="logo">🎬 CINEMA</div>  
+    <ul class="nav-links">  
+        <li><a href="{% url 'home' %}">Home</a></li>  
+        <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>  
+        <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>  
+        <li><a href="{% url 'about' %}">About</a></li>  
+        <li><a href="{% url 'contact' %}">Contact</a></li>  
+        <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>  
+        <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>  
+    </ul>  
+</nav>  
 
-   <!-- Hero Board -->
-    <section class="hero">
-        <img src="{% static 'images/h.jpg' %}" alt="Cinema Hero">
-        <div class="hero-content">
-            <h1>Experience Movies Like Never Before</h1>
-            <p>Book tickets, stream online, and enjoy the latest releases.</p>
-            <a href="{% url 'cinema' %}" class="btn">View More</a>
-        </div>
-    </section>
+<!-- Hero Board -->  
+<section class="hero">  
+    <img src="{% static 'images/h.jpg' %}" alt="Cinema Hero">  
+    <div class="hero-content">  
+        <h1>Experience Movies Like Never Before</h1>  
+        <p>Book tickets, stream online, and enjoy the latest releases.</p>  
+        <a href="{% url 'cinema' %}" class="btn">View More</a>  
+    </div>  
+</section>  
 
-    <!-- Featured Movies: SLIDE CAROUSEL -->
-<!-- Featured Cinema Movies Carousel -->
-<section class="carousel-section">
-    <h2>Featured Events/Cinema</h2>
-    <div class="carousel-container">
-        {% for movie in featured_movies|slice:":10" %}
-            <div class="carousel-item">
-                {% if movie.poster %}
-                    <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">
-                {% else %}
-                    <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
-                {% endif %}
-                <h3>{{ movie.title }}</h3>
-                <a href="{% url 'seat_selection' movie.id %}" class="btn-small">Book Now</a>
-            </div>
-        {% endfor %}
-        {% if featured_movies|length > 10 %}
-            <div class="more-link">
-                <a href="{% url 'cinema' %}">More ➝</a>
-            </div>
-        {% endif %}
-    </div>
+<!-- Featured Cinema Movies Carousel -->  
+<section class="carousel-section">  
+    <h2>Featured Events/Cinema</h2>  
+    <div class="carousel-wrapper">  
+        <button class="carousel-arrow prev">‹</button>  
+        <div class="carousel-container">  
+            {% for movie in featured_movies|slice:":10" %}  
+                <div class="carousel-item">  
+                    {% if movie.poster %}  
+                        <img src="{{ movie.poster.url }}" alt="{{ movie.title }}">  
+                    {% else %}  
+                        <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">  
+                    {% endif %}  
+                    <h3>{{ movie.title }}</h3>  
+                    <a href="{% url 'seat_selection' movie.id %}" class="btn-small">Book Now</a>  
+                </div>  
+            {% endfor %}  
+        </div>  
+        <button class="carousel-arrow next">›</button>  
+    </div>  
+    {% if featured_movies|length > 10 %}  
+        <div class="more-link">  
+            <a href="{% url 'cinema' %}">More ➝</a>  
+        </div>  
+    {% endif %}  
+</section>  
+
+<!-- Featured Streaming Content Carousel -->  
+<section class="carousel-section">  
+    <h2>Featured Streaming Content</h2>  
+    <div class="carousel-wrapper">  
+        <button class="carousel-arrow prev">‹</button>  
+        <div class="carousel-container">  
+            {% for content in featured_streaming|slice:":10" %}  
+                <div class="carousel-item">  
+                    {% if content.thumbnail %}  
+                        <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}">  
+                    {% else %}  
+                        <img src="{% static 'img/default_poster.jpg' %}" alt="{{ content.title }}">  
+                    {% endif %}  
+                    <h3>{{ content.title }}</h3>  
+                    <a href="{% url 'streaming:watch_video' content.id %}" class="btn-small">Watch Now</a>  
+                </div>  
+            {% endfor %}  
+        </div>  
+        <button class="carousel-arrow next">›</button>  
+    </div>  
+    {% if featured_streaming|length > 10 %}  
+        <div class="more-link">  
+            <a href="{% url 'streaming:streaming_home' %}">More ➝</a>  
+        </div>  
+    {% endif %}  
 </section>
 
-<!-- Featured Streaming Content Carousel -->
-<section class="carousel-section">
-    <h2>Featured Streaming Content</h2>
-    <div class="carousel-container">
-        {% for content in featured_streaming|slice:":10" %}
-            <div class="carousel-item">
-                {% if content.thumbnail %}
-                    <img src="{{ content.thumbnail.url }}" alt="{{ content.title }}">
-                {% else %}
-                    <img src="{% static 'img/default_poster.jpg' %}" alt="{{ content.title }}">
-                {% endif %}
-                <h3>{{ content.title }}</h3>
-                <a href="{% url 'streaming:watch_video' content.id %}" class="btn-small">Watch Now</a>
-            </div>
-        {% endfor %}
-        {% if featured_streaming|length > 10 %}
-            <div class="more-link">
-                <a href="{% url 'streaming:streaming_home' %}">More ➝</a>
-            </div>
-        {% endif %}
-    </div>
-</section>
+<!-- Subscription Plans -->  
+<section class="plans">  
+    <h2>Choose Your Plan</h2>  
+    <div class="plan-box">  
+        <h3>Monthly</h3>  
+        <p>$500 / month</p>  
+        <a href="{% url 'streaming:signup' %}" class="btn">Subscribe</a>  
+    </div>  
+    <div class="plan-box">  
+        <h3>Annual</h3>  
+        <p>$5000 / year</p>  
+        <a href="{% url 'streaming:signup' %}" class="btn">Subscribe</a>  
+    </div>  
+</section>  
 
-    <!-- Subscription Plans -->
-    <section class="plans">
-        <h2>Choose Your Plan</h2>
-        <div class="plan-box">
-            <h3>Monthly</h3>
-            <p>$500 / month</p>
-            <a href="{% url 'streaming:signup' %}" class="btn">Subscribe</a>
-        </div>
-        <div class="plan-box">
-            <h3>Annual</h3>
-            <p>$5000 / year</p>
-            <a href="{% url 'streaming:signup' %}" class="btn">Subscribe</a>
-        </div>
-    </section>
+<!-- Footer -->  
+<footer class="site-footer">  
+    <div class="footer-content">  
+        <div class="social-icons">  
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">  
+                <i class="fab fa-facebook-f"></i>  
+            </a>  
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">  
+                <i class="fab fa-twitter"></i>  
+            </a>  
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">  
+                <i class="fab fa-instagram"></i>  
+            </a>  
+            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">  
+                <i class="fab fa-linkedin-in"></i>  
+            </a>  
+        </div>  
+    </div>  
+    <p>&copy; 2025 MSTRS UOG. All rights reserved.</p>  
+    <div id="google_translate_element"></div>  
+</footer>  
 
-    <!-- Footer -->
-    <footer class="site-footer">
-    <div class="footer-content">
-        <div class="social-icons">
-            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
-                <i class="fab fa-facebook-f"></i>
-            </a>
-            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
-                <i class="fab fa-twitter"></i>
-            </a>
-            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
-                <i class="fab fa-instagram"></i>
-            </a>
-            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
-                <i class="fab fa-linkedin-in"></i>
-            </a>
-        </div>
-    </div>
-        <p>&copy; 2025 MSTRS UOG. All rights reserved.</p>
-        <div id="google_translate_element"></div>
-</footer>
+<!-- Google Translate Widget -->  
+<script type="text/javascript">  
+  function googleTranslateElementInit() {  
+    new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');  
+  }  
+</script>  
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>  
 
-    <!-- Google Translate Widget -->
-    <script type="text/javascript">
-      function googleTranslateElementInit() {
-        new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-      }
-    </script>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<!-- Carousel Logic -->  
+<script>  
+  document.querySelectorAll(".carousel-section").forEach(section => {  
+    const container = section.querySelector(".carousel-container");  
+    const prev = section.querySelector(".carousel-arrow.prev");  
+    const next = section.querySelector(".carousel-arrow.next");  
+    let scrollAmount = container.clientWidth * 0.8;  
 
-    <!-- Tiny slider logic (no external libs) -->
-    <script>
-      (function () {
-        const viewport = document.querySelector('.carousel-viewport');
-        const track = document.querySelector('.carousel-track');
-        const btnPrev = document.querySelector('.carousel-arrow.prev');
-        const btnNext = document.querySelector('.carousel-arrow.next');
+    function updateArrows() {  
+      prev.style.display = container.scrollLeft > 0 ? "block" : "none";  
+      next.style.display = (container.scrollLeft + container.clientWidth < container.scrollWidth) ? "block" : "none";  
+    }  
 
-if (!viewport  !track  !btnPrev || !btnNext) return;
+    prev.addEventListener("click", () => {  
+      container.scrollBy({ left: -scrollAmount, behavior: "smooth" });  
+    });  
+    next.addEventListener("click", () => {  
+      container.scrollBy({ left: scrollAmount, behavior: "smooth" });  
+    });  
 
-        const scrollStep = () => viewport.clientWidth * 0.95;
+    container.addEventListener("scroll", updateArrows);  
+    window.addEventListener("resize", updateArrows);  
+    updateArrows();  
+  });  
+</script>  
 
-        btnPrev.addEventListener('click', () => {
-          viewport.scrollBy({ left: -scrollStep(), behavior: 'smooth' });
-        });
-        btnNext.addEventListener('click', () => {
-          viewport.scrollBy({ left: scrollStep(), behavior: 'smooth' });
-        });
-
-        // Optional: keyboard support
-        viewport.setAttribute('tabindex', '0');
-        viewport.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowRight') {
-            viewport.scrollBy({ left: scrollStep(), behavior: 'smooth' });
-          } else if (e.key === 'ArrowLeft') {
-            viewport.scrollBy({ left: -scrollStep(), behavior: 'smooth' });
-          }
-        });
-
-        // Snap assist: keep items nicely aligned when user drags/scrolls
-        let isSnapping = false;
-        viewport.addEventListener('scroll', () => {
-          if (isSnapping) return;
-          clearTimeout(viewport._snapTimer);
-          viewport._snapTimer = setTimeout(() => {
-            isSnapping = true;
-            // Find nearest item boundary
-            const items = Array.from(track.children);
-            const left = viewport.scrollLeft;
-            let best = 0, bestDelta = Infinity, x = 0;
-            for (const el of items) {
-              const w = el.getBoundingClientRect().width + 16; // include gap
-              if (Math.abs(x - left) < bestDelta) { best = x; bestDelta = Math.abs(x - left); }
-              x += w;
-            }
-            viewport.scrollTo({ left: best, behavior: 'smooth' });
-            setTimeout(() => { isSnapping = false; }, 300);
-          }, 120);
-        });
-      })();
-    </script>
-</body>
+</body>  
 </html>

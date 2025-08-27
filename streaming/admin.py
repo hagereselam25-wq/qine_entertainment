@@ -7,6 +7,14 @@ from django.shortcuts import render
 from django.utils.translation import gettext_lazy as _
 import csv
 
+from .models import StreamingContent, StreamingSubscription, StreamViewLog, StreamingAnalyticsProxy
+
+
+from django.db.models import Sum, Count, F
+from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
+import csv
+
 from .models import StreamingContent, StreamingSubscription, StreamViewLog
 
 
@@ -14,7 +22,7 @@ from .models import StreamingContent, StreamingSubscription, StreamViewLog
 class StreamingContentAdmin(admin.ModelAdmin):
     list_display = (
         'title', 'category', 'total_plays', 'unique_viewers',
-        'average_rating',  # added average rating column
+        'average_rating',
         'total_watch_time_minutes_display', 'completion_rate', 'release_date',
         'hls_folder', 'download_analytics_csv'
     )
@@ -23,6 +31,7 @@ class StreamingContentAdmin(admin.ModelAdmin):
     ordering = ('-release_date',)
     readonly_fields = ('hls_folder', 'total_watch_time_minutes_display', 'average_rating')
 
+    # -------------------- Existing Methods --------------------
     def total_watch_time_minutes_display(self, obj):
         total_seconds = StreamViewLog.objects.filter(content=obj).aggregate(
             total=Sum('watch_time_seconds')
@@ -38,15 +47,20 @@ class StreamingContentAdmin(admin.ModelAdmin):
         )
     download_analytics_csv.short_description = _('Analytics CSV')
 
+    # -------------------- Custom URLs --------------------
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
             path('<int:content_id>/download_csv/',
                  self.admin_site.admin_view(self.download_csv_view),
-                 name='streamingcontent_download_csv')
+                 name='streamingcontent_download_csv'),
+            path('analytics/',  # New analytics page
+                 self.admin_site.admin_view(self.analytics_view),
+                 name='streamingcontent_analytics'),
         ]
         return custom_urls + urls
 
+    # -------------------- CSV Download --------------------
     def download_csv_view(self, request, content_id):
         content = self.get_object(request, content_id)
         response = HttpResponse(content_type='text/csv')
@@ -81,6 +95,30 @@ class StreamingContentAdmin(admin.ModelAdmin):
 
         return response
 
+    # -------------------- Analytics Page --------------------
+    def analytics_view(self, request):
+        content_stats = (
+            StreamViewLog.objects
+            .values('content__title')
+            .annotate(
+                total_views=Sum('views'),
+                unique_viewers=Count('user', distinct=True),
+                total_watch_time=Sum('watch_time_seconds')
+            )
+            .order_by('-total_views')
+        )
+
+        # Prepare data for Chart.js
+        labels = [c['content__title'] for c in content_stats]
+        total_views_data = [c['total_views'] for c in content_stats]
+        unique_viewers_data = [c['unique_viewers'] for c in content_stats]
+        context = {
+            'content_stats': content_stats,
+            'labels': labels,
+            'total_views_data': total_views_data,
+            'unique_viewers_data': unique_viewers_data,
+        }
+        return render(request, 'admin/streaming_analytics.html', context)
 
 @admin.register(StreamingSubscription)
 class StreamingSubscriptionAdmin(admin.ModelAdmin):
@@ -118,4 +156,48 @@ class StreamingRatingAdmin(admin.ModelAdmin):
     list_display = ('user', 'content', 'rating')
     list_filter = ('rating',)
     search_fields = ('userusername', 'contenttitle')
-    
+    # streaming/admin.py
+# streaming/admin.py
+from django.contrib import admin
+from django.db.models import Sum, Count, F
+from .models import StreamViewLog, StreamingAnalyticsProxy
+
+@admin.register(StreamingAnalyticsProxy)
+class StreamingAnalyticsProxyAdmin(admin.ModelAdmin):
+    change_list_template = "admin/streaming/analytics_chart.html"
+    list_display = ()  # Show only charts, no table
+
+    def changelist_view(self, request, extra_context=None):
+        qs = StreamViewLog.objects.values("content__title").annotate(
+            total_views=Sum("views"),
+            unique_users=Count("user", distinct=True),
+            total_watch_time_seconds=Sum("watch_time_seconds"),
+            content_duration=F("content__duration_minutes")
+        ).order_by("-total_views")
+
+        labels = [item["content__title"] for item in qs]
+        views = [item["total_views"] or 0 for item in qs]
+        unique_users = [item["unique_users"] or 0 for item in qs]
+
+        completion_rates = []
+        for item in qs:
+            duration_minutes = item["content_duration"] or 0
+            duration_seconds = duration_minutes * 60
+
+            if duration_seconds > 0 and item["total_views"]:
+                avg_watch = (item["total_watch_time_seconds"] or 0) / item["total_views"]
+                completion_rate = min(avg_watch / duration_seconds, 1) * 100
+            else:
+                completion_rate = 0
+
+            completion_rates.append(round(completion_rate, 2))
+
+        extra_context = extra_context or {}
+        extra_context.update({
+            "labels": labels,
+            "views": views,
+            "unique_users": unique_users,
+            "completion_rates": completion_rates,
+        })
+
+        return super().changelist_view(request, extra_context=extra_context)
