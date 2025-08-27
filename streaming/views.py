@@ -146,7 +146,22 @@ def subscription_thankyou(request):
     subscription = StreamingSubscription.objects.filter(chapa_tx_ref=tx_ref).first()
     return render(request, 'streaming/thankyou.html', {'subscription': subscription})
 
-# user authentication views
+# views.py
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from django.contrib import messages
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.translation import gettext as _
+from .forms import CustomUserSignupForm
+from .models import StreamingSubscription, Transaction, User
+import uuid
+import requests
+from django.conf import settings
+
+CHAPA_BASE_URL = "https://api.chapa.co/v1"
+
+
 def user_signup(request):
     if request.method == 'POST':
         form = CustomUserSignupForm(request.POST)
@@ -162,6 +177,10 @@ def user_signup(request):
             amount = 500 if plan == 'monthly' else 5000
             tx_ref = f"sub-{uuid.uuid4()}"
 
+            # Get country from form POST
+            country = request.POST.get('country', 'Other')  # default to 'Other'
+
+            # Create subscription with country
             StreamingSubscription.objects.create(
                 user=user,
                 full_name=username,
@@ -169,8 +188,11 @@ def user_signup(request):
                 subscription_type=plan,
                 chapa_tx_ref=tx_ref,
                 amount=amount,
-                is_paid=False
+                is_paid=False,
+                country=country
             )
+
+            # Create transaction
             Transaction.objects.create(
                 user=user,
                 tx_ref=tx_ref,
@@ -181,6 +203,7 @@ def user_signup(request):
                 status='initiated'
             )
 
+            # Prepare Chapa payment
             callback_url = request.build_absolute_uri(reverse('streaming:verify_subscription_payment'))
             chapa_payload = {
                 "amount": str(amount),
@@ -207,8 +230,10 @@ def user_signup(request):
     else:
         form = CustomUserSignupForm()
 
-    return render(request, 'streaming/user_signup.html', {'form': form})
+    # Pass a list of countries for dropdown
+    countries = ['Ethiopia', 'USA', 'UK', 'Canada', 'Germany', 'Other']
 
+    return render(request, 'streaming/user_signup.html', {'form': form, 'countries': countries})
 
 def user_login(request):
     if request.method == 'POST':
@@ -236,11 +261,30 @@ def profile(request):
 # ---------------------------from django.db.models import Q
 from collections import defaultdict
 
+from collections import defaultdict
+from django.db.models import Sum
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import StreamingContent, UserProfile, StreamViewLog
+from .utils import generate_signed_url  # your existing utility
+
 @login_required
 def streaming_home(request):
-    contents = StreamingContent.objects.all().order_by('-release_date')
+    # Fetch user country from profile
+    profile = UserProfile.objects.filter(user=request.user).first()
+    user_country = profile.country if profile else None
 
-    # Generate signed URLs
+    # Filter contents for country-based recommendation
+    if user_country:
+        contents = StreamingContent.objects.filter(
+            streamviewlog__country=user_country
+        ).annotate(
+            country_plays=Sum('streamviewlog__views')
+        ).order_by('-country_plays', '-release_date').distinct()
+    else:
+        contents = StreamingContent.objects.all().order_by('-release_date')
+
+    # Generate signed URLs for HLS videos
     for content in contents:
         if content.video_url and content.video_url.endswith('.m3u8'):
             base_url = request.build_absolute_uri(content.video_url)
@@ -248,7 +292,7 @@ def streaming_home(request):
         else:
             content.signed_url = content.video_file.url if content.video_file else ""
 
-    # Get distinct values for filters
+    # Distinct values for filters
     categories = StreamingContent.objects.values_list("category", flat=True).distinct()
     genres = StreamingContent.objects.values_list("genre", flat=True).distinct()
     languages = StreamingContent.objects.values_list("language", flat=True).distinct()
@@ -267,6 +311,7 @@ def streaming_home(request):
     }
 
     return render(request, "streaming/streaming_home.html", context)
+
 # ------------------- Watch Video -------------------
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -346,7 +391,6 @@ def watch_video(request, content_id):
         'average_rating': content.average_rating or 0,
     }
     return render(request, 'streaming/watch_video.html', context)
-
 
 # ------------------- Report Watch Time -------------------
 @csrf_exempt

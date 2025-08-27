@@ -156,29 +156,40 @@ class StreamingRatingAdmin(admin.ModelAdmin):
     list_display = ('user', 'content', 'rating')
     list_filter = ('rating',)
     search_fields = ('userusername', 'contenttitle')
-    # streaming/admin.py
-# streaming/admin.py
+   
+   
+   
+# streaming/admin.py# streaming/admin.py
 from django.contrib import admin
-from django.db.models import Sum, Count, F
-from .models import StreamViewLog, StreamingAnalyticsProxy
+from django.db.models import Sum, Count, F, Avg
+from .models import StreamViewLog, StreamingAnalyticsProxy, StreamingContent
 
 @admin.register(StreamingAnalyticsProxy)
 class StreamingAnalyticsProxyAdmin(admin.ModelAdmin):
     change_list_template = "admin/streaming/analytics_chart.html"
-    list_display = ()  # Show only charts, no table
+    list_display = ()  # Hide table, show charts only
 
     def changelist_view(self, request, extra_context=None):
-        qs = StreamViewLog.objects.values("content__title").annotate(
+        # Aggregate from StreamViewLog joined with StreamingContent
+        qs = StreamViewLog.objects.values(
+            "content__title",
+            "content__category",
+            "content__genre",
+            "content__language",
+        ).annotate(
             total_views=Sum("views"),
             unique_users=Count("user", distinct=True),
             total_watch_time_seconds=Sum("watch_time_seconds"),
-            content_duration=F("content__duration_minutes")
+            content_duration=F("content__duration_minutes"),
+            avg_rating=Avg("content__average_rating"),
         ).order_by("-total_views")
 
         labels = [item["content__title"] for item in qs]
         views = [item["total_views"] or 0 for item in qs]
         unique_users = [item["unique_users"] or 0 for item in qs]
+        ratings = [round(item["avg_rating"] or 0, 2) for item in qs]
 
+        # Calculate completion rates
         completion_rates = []
         for item in qs:
             duration_minutes = item["content_duration"] or 0
@@ -192,12 +203,56 @@ class StreamingAnalyticsProxyAdmin(admin.ModelAdmin):
 
             completion_rates.append(round(completion_rate, 2))
 
+        # Global KPIs
+        total_views = sum(views)
+        avg_completion_rate = round(sum(completion_rates) / len(completion_rates), 2) if completion_rates else 0
+        total_unique_users = sum(unique_users)
+        avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0
+
+        # Category distribution
+        category_qs = StreamingContent.objects.values("category").annotate(count=Count("id"))
+        categories = [c["category"] for c in category_qs]
+        category_counts = [c["count"] for c in category_qs]
+
+        # Genre distribution
+        genre_qs = StreamingContent.objects.values("genre").annotate(count=Count("id"))
+        genres = [g["genre"] for g in genre_qs]
+        genre_counts = [g["count"] for g in genre_qs]
+
+        # Language distribution
+        lang_qs = StreamingContent.objects.values("language").annotate(count=Count("id"))
+        languages = [l["language"] for l in lang_qs]
+        language_counts = [l["count"] for l in lang_qs]
+
+        # Country views (from logs)
+        country_qs = StreamViewLog.objects.values("country").annotate(total=Sum("views"))
+        countries = [c["country"] or "Unknown" for c in country_qs]
+        country_views = [c["total"] for c in country_qs]
+
         extra_context = extra_context or {}
         extra_context.update({
+            # Per-content
             "labels": labels,
             "views": views,
             "unique_users": unique_users,
             "completion_rates": completion_rates,
+            "ratings": ratings,
+
+            # Global KPIs
+            "total_views": total_views,
+            "avg_completion_rate": avg_completion_rate,
+            "total_unique_users": total_unique_users,
+            "avg_rating": avg_rating,
+
+            # Distributions
+            "categories": categories,
+            "category_counts": category_counts,
+            "genres": genres,
+            "genre_counts": genre_counts,
+            "languages": languages,
+            "language_counts": language_counts,
+            "countries": countries,
+            "country_views": country_views,
         })
 
         return super().changelist_view(request, extra_context=extra_context)

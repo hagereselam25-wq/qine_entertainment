@@ -1,65 +1,164 @@
-{% extends "admin/change_list.html" %}
-{% load static %}
+
+{% load i18n static %}
 
 {% block content %}
-  <h1 style="margin-bottom:20px;">📊 Streaming Analytics Dashboard</h1>
+<div class="container" style="padding:40px 5%; font-family: 'Poppins', sans-serif;">
 
-  <div id="viewsChart" style="width:100%;height:400px;"></div>
-  <div id="completionChart" style="width:100%;height:400px;margin-top:40px;"></div>
-  <div id="usersPieChart" style="width:100%;height:400px;margin-top:40px;"></div>
+    <h1 style="text-align:center; margin-bottom:40px; color:#d46a2f;">📊 Streaming Analytics Dashboard</h1>
 
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-  <script>
-    // Django context data
-    var labels = {{ labels|safe }};
-    var views = {{ views|safe }};
-    var uniqueUsers = {{ unique_users|safe }};
-    var completionRates = {{ completion_rates|safe }};
+    <!-- KPI Cards -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:25px; margin-bottom:50px;">
+        <div class="kpi-card">
+            <h3 style="color:#555;">Total Views</h3>
+            <p class="kpi-value" style="color:#2b6cb0;">{{ total_views }}</p>
+        </div>
+        <div class="kpi-card">
+            <h3 style="color:#555;">Unique Users</h3>
+            <p class="kpi-value" style="color:#38a169;">{{ total_unique_users }}</p>
+        </div>
+        <div class="kpi-card">
+            <h3 style="color:#555;">Avg Completion</h3>
+            <p class="kpi-value" style="color:#d69e2e;">{{ avg_completion_rate }}%</p>
+        </div>
+        <div class="kpi-card">
+            <h3 style="color:#555;">Avg Rating</h3>
+            <p class="kpi-value" style="color:#e53e3e;">{{ avg_rating }}</p>
+        </div>
+    </div>
 
-    // Chart 1: Views per Content (Bar)
-    var trace1 = {
-      x: labels,
-      y: views,
-      type: 'bar',
-      marker: {color: '#636EFA'},
-      name: 'Total Views'
+    <!-- Charts -->
+    <div id="viewsChart" class="chart-card"></div>
+    <div id="completionChart" class="chart-card"></div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:25px; margin-bottom:50px;">
+        <div id="categoryChart" class="chart-card"></div>
+        <div id="genreChart" class="chart-card"></div>
+        <div id="languageChart" class="chart-card"></div>
+    </div>
+
+</div>
+
+<!-- Styles for cards and charts -->
+<style>
+.kpi-card {
+    background:#fff; 
+    border-radius:12px; 
+    padding:25px; 
+    text-align:center; 
+    box-shadow:0 6px 15px rgba(0,0,0,0.08); 
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow:0 12px 25px rgba(0,0,0,0.12);
+}
+.kpi-value {
+    font-size:28px; 
+    font-weight:700;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+.kpi-card:hover .kpi-value {
+    transform: scale(1.1);
+}
+.chart-card {
+    height:450px; 
+    background:#fff; 
+    border-radius:12px; 
+    padding:20px; 
+    box-shadow:0 6px 15px rgba(0,0,0,0.08); 
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.chart-card:hover {
+    transform: translateY(-5px);
+    box-shadow:0 12px 25px rgba(0,0,0,0.12);
+}
+</style>
+
+<!-- Plotly -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    // Data from Django context
+    const labels = {{ labels|safe }};
+    const views = {{ views|safe }};
+    const uniqueUsers = {{ unique_users|safe }};
+    const completionRates = {{ completion_rates|safe }};
+    const ratings = {{ ratings|safe }};
+
+    const categories = {{ categories|safe }};
+    const categoryCounts = {{ category_counts|safe }};
+
+    const genres = {{ genres|safe }};
+    const genreCounts = {{ genre_counts|safe }};
+
+    const languages = {{ languages|safe }};
+    const languageCounts = {{ language_counts|safe }};
+
+    const countries = {{ countries|safe }};
+    const countryViews = {{ country_views|safe }};
+
+    const plotLayoutDefaults = {
+        plot_bgcolor: '#f8f9fa',
+        paper_bgcolor: '#f8f9fa',
+        font: {family:'Poppins', color:'#2d2d2d'},
+        hovermode: 'closest',
+        titlefont: {family:'Poppins', color:'#d46a2f', size:20}
     };
 
-    Plotly.newPlot('viewsChart', [trace1], {
-      title: 'Total Views per Content',
-      xaxis: { title: 'Content Title' },
-      yaxis: { title: 'Views' }
-    });
+    // Views Chart (Bar)
+    Plotly.newPlot('viewsChart', [{
+        x: labels,
+        y: views,
+        type: 'bar',
+        marker: {color: 'rgba(212,106,47,0.8)', line: {width:1, color:'#d46a2f'}},
+        hovertemplate: '%{x}<br>Views: %{y}<extra></extra>'
+    }], {...plotLayoutDefaults, title: "Top Content by Views", xaxis:{title:'Content'}, yaxis:{title:'Views'}}, {responsive:true, displayModeBar:false, scrollZoom:true});
 
-    // Chart 2: Completion Rate (Line)
-    var trace2 = {
-      x: labels,
-      y: completionRates,
-      type: 'scatter',
-      mode: 'lines+markers',
-      line: {color: '#EF553B'},
-      name: 'Completion Rate (%)'
-    };
+// Completion Chart (Line)
+    Plotly.newPlot('completionChart', [{
+        x: labels,
+        y: completionRates,
+        mode: 'lines+markers',
+        marker: {color: '#d69e2e', size:8},
+        line: {color:'#d69e2e', width:3},
+        hovertemplate: '%{x}<br>Completion: %{y:.2f}%<extra></extra>'
+    }], {...plotLayoutDefaults, title:"Completion Rate per Content", xaxis:{title:'Content'}, yaxis:{title:'Completion Rate (%)'}}, {responsive:true, displayModeBar:false});
 
-    Plotly.newPlot('completionChart', [trace2], {
-      title: 'Completion Rate per Content',
-      xaxis: { title: 'Content Title' },
-      yaxis: { title: 'Completion Rate (%)', range: [0, 100] }
-    });
+    // Category Pie
+    Plotly.newPlot('categoryChart', [{
+        labels: categories,
+        values: categoryCounts,
+        type: 'pie',
+        marker: {colors:['#d46a2f','#f28a3c','#2b6cb0','#38a169','#d69e2e']},
+        hoverinfo:'label+percent+value'
+    }], {...plotLayoutDefaults, title:"Content Categories"}, {responsive:true, displayModeBar:false});
 
-    // Chart 3: Unique Users (Pie)
-    var trace3 = {
-      labels: labels,
-      values: uniqueUsers,
-      type: 'pie',
-      textinfo: 'label+percent',
-      marker: {
-        colors: ['#00CC96','#AB63FA','#FFA15A','#19D3F3','#FF6692','#B6E880']
-      }
-    };
+    // Genre Pie
+    Plotly.newPlot('genreChart', [{
+        labels: genres,
+        values: genreCounts,
+        type: 'pie',
+        marker: {colors:['#d46a2f','#f28a3c','#2b6cb0','#38a169','#d69e2e','#e53e3e','#6b46c1']},
+        hoverinfo:'label+percent+value'
+    }], {...plotLayoutDefaults, title:"Genres"}, {responsive:true, displayModeBar:false});
 
-    Plotly.newPlot('usersPieChart', [trace3], {
-      title: 'Unique Users Distribution'
-    });
-  </script>
+    // Language Pie
+    Plotly.newPlot('languageChart', [{
+        labels: languages,
+        values: languageCounts,
+        type: 'pie',
+        marker: {colors:['#d46a2f','#f28a3c','#2b6cb0','#38a169','#d69e2e','#e53e3e']},
+        hoverinfo:'label+percent+value'
+    }], {...plotLayoutDefaults, title:"Languages"}, {responsive:true, displayModeBar:false});
+
+    // Country Views (Horizontal Bar)
+    Plotly.newPlot('countryChart', [{
+        x: countryViews,
+        y: countries,
+        type: 'bar',
+        orientation: 'h',
+        marker: {color: 'rgba(56,161,105,0.8)', line: {width:1, color:'#38a169'}},
+        hovertemplate: '%{y}<br>Views: %{x}<extra></extra>'
+    }], {...plotLayoutDefaults, title:"Views by Country", xaxis:{title:'Views'}, yaxis:{title:'Country'}}, {responsive:true, displayModeBar:false, scrollZoom:true});
+
+</script>
 {% endblock %}

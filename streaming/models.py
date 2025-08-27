@@ -40,7 +40,7 @@ class StreamingSubscription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     access_expires_at = models.DateTimeField(_("Access Expires At"), null=True, blank=True)
     qr_code = models.ImageField(_("QR Code"), upload_to='qrcodes/', blank=True, null=True)
-
+    country = CountryField(blank=True, null=True)
     def has_access(self):
         return self.is_paid and self.access_expires_at and timezone.now() < self.access_expires_at
 
@@ -249,6 +249,11 @@ from django.utils import timezone
 def profile_image_path(instance, filename):
     return f'profiles/{instance.user.username}/{filename}'
 
+from django_countries.fields import CountryField
+
+# Add country to UserProfile
+from django_countries.fields import CountryField
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(
@@ -257,11 +262,11 @@ class UserProfile(models.Model):
         default='profile_pics/default_profile.png'
     )
     bio = models.TextField(_("Bio"), blank=True, null=True)
-    history_cleared_at = models.DateTimeField(_("History Cleared At"), blank=True, null=True)  # ✅ track last clear
+    history_cleared_at = models.DateTimeField(_("History Cleared At"), blank=True, null=True)
+    country = CountryField(_("Country"), blank=True, null=True)  # ✅ added
 
     def str(self):
         return self.user.username
-
 
 class WatchHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -294,3 +299,4 @@ class StreamingAnalyticsProxy(StreamingContent):
         proxy = True
         verbose_name = "Streaming Analytics"
         verbose_name_plural = "Streaming Analytics"
+

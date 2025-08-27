@@ -1,25 +1,102 @@
 {% load i18n %}
 {% load static %}
 
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% trans "Thak You!" %}</title>
-
-    <!-- Link main CSS -->
+    <title>{% trans "Thank You!" %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-{% if subscription %}
-  <h2>✅ {% trans "Thank You for Subscribing!" %}</h2>
-  <p><strong>{% trans "Name:" %}</strong> {{ subscription.full_name }}</p>
-  <p><strong>{% trans "Email:" %}</strong> {{ subscription.email }}</p>
-  <p><strong>{% trans "Type:" %}</strong> {{ subscription.subscription_type|capfirst }}</p>
-  <p><strong>{% trans "Status:" %}</strong> {{ subscription.is_paid|yesno:_("Paid,Unpaid") }}</p>
-  {% if subscription.qr_code %}
-    <img src="{{ subscription.qr_code.url }}" alt="{% trans 'QR Code' %}" width="200">
-    <a href="{{ subscription.qr_code.url }}" download>{% trans "Download Ticket" %}</a>
-    <p><a href="{% url 'home' %}">{% trans "Home" %}</a></p>
-  {% endif %}
-{% else %}
-  <h2>{% trans "Subscription not found." %}</h2>
-{% endif %}
+<body class="signup-page">
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">🎬 CINEMA</div>
+        <ul class="nav-links">
+            <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
+            <li><a href="{% url 'cinema' %}">{% trans "Movies" %}</a></li>
+            <li><a href="{% url 'streaming:streaming_home' %}">{% trans "Streaming" %}</a></li>
+            <li><a href="{% url 'about' %}">{% trans "About" %}</a></li>
+            <li><a href="{% url 'contact' %}">{% trans "Contact" %}</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="signup-btn">Login</a></li>
+        </ul>
+    </nav>
+
+    <div class="signup-container thank-you-container">
+        {% if subscription %}
+            <div class="subscription-card">
+                <h1 class="success-msg">✅ {% trans "Thank You for Subscribing!" %}</h1>
+                
+                <div class="subscription-details">
+                    <p><strong>{% trans "Name:" %}</strong> {{ subscription.full_name }}</p>
+                    <p><strong>{% trans "Email:" %}</strong> {{ subscription.email }}</p>
+                    <p><strong>{% trans "Type:" %}</strong> {{ subscription.subscription_type|capfirst }}</p>
+                    <p><strong>{% trans "Status:" %}</strong> {{ subscription.is_paid|yesno:_("Paid,Unpaid") }}</p>
+                    
+                    {% if subscription.qr_code %}
+                        <div class="qr-section">
+                            <img src="{{ subscription.qr_code.url }}" alt="{% trans 'QR Code' %}" class="qr-code">
+                            <a href="{{ subscription.qr_code.url }}" download class="download-btn">{% trans "Download Ticket" %}</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="back-home">
+                    <a href="{% url 'home' %}" class="home-btn">{% trans "Back to Home" %}</a>
+                </div>
+            </div>
+        {% else %}
+            <h1 class="error-msg">{% trans "Subscription not found." %}</h1>
+        {% endif %}
+    </div>
+
+    <style>
+        /* Extra styling for ticket card */
+        .subscription-card {
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 25px 30px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .subscription-card h1.success-msg {
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        .subscription-card .subscription-details p {
+            font-size: 16px;
+            margin: 8px 0;
+        }
+        .qr-section {
+            margin: 20px 0;
+        }
+        .qr-code {
+            width: 180px;
+            margin-bottom: 10px;
+        }
+        .download-btn, .home-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background-color: #ffcc00;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .download-btn:hover, .home-btn:hover {
+            background-color: #ffcc00;
+        }
+        .error-msg {
+            color: #dc3545;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+
+</body>
+</html>

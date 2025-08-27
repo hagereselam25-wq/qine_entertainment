@@ -76,6 +76,7 @@
 
           {% if content.video_file or content.video_url %}
             <a href="{% url 'streaming:watch_video' content.id %}" class="streaming-watch-btn">{% trans "Watch Now" %}</a>
+            <!-- Use signed_url for HLS streaming if needed -->
           {% else %}
             <span class="streaming-no-video">{% trans "No video available" %}</span>
           {% endif %}
@@ -101,13 +102,13 @@ document.addEventListener("DOMContentLoaded", function() {
   const filterBtn = document.getElementById("streamingFilterBtn");
   const cards = document.querySelectorAll(".streaming-card");
 
-  function applyFilters() {
+function applyFilters() {
     const search = searchInput.value.toLowerCase().trim();
     const category = categoryFilter.value;
     const genre = genreFilter.value;
     const language = languageFilter.value;
 
-cards.forEach(card => {
+    cards.forEach(card => {
       const title = card.dataset.title;
       const cardCategory = card.dataset.category;
       const cardGenre = card.dataset.genre;
