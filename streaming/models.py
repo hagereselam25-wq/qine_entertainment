@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_countries.fields import CountryField
 import os
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -40,7 +39,6 @@ class StreamingSubscription(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     access_expires_at = models.DateTimeField(_("Access Expires At"), null=True, blank=True)
     qr_code = models.ImageField(_("QR Code"), upload_to='qrcodes/', blank=True, null=True)
-    country = CountryField(blank=True, null=True)
     def has_access(self):
         return self.is_paid and self.access_expires_at and timezone.now() < self.access_expires_at
 
@@ -226,7 +224,6 @@ class StreamViewLog(models.Model):
     views = models.IntegerField(_("Views"), default=0)
     last_viewed = models.DateTimeField(_("Last Viewed"), auto_now=True)
     watch_time_seconds = models.PositiveIntegerField(_("Watch Time (seconds)"), default=0)
-    country = CountryField(_("Country"), blank=True, null=True)
 
     class Meta:
         unique_together = ('user', 'content')
@@ -249,10 +246,8 @@ from django.utils import timezone
 def profile_image_path(instance, filename):
     return f'profiles/{instance.user.username}/{filename}'
 
-from django_countries.fields import CountryField
 
 # Add country to UserProfile
-from django_countries.fields import CountryField
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -263,7 +258,6 @@ class UserProfile(models.Model):
     )
     bio = models.TextField(_("Bio"), blank=True, null=True)
     history_cleared_at = models.DateTimeField(_("History Cleared At"), blank=True, null=True)
-    country = CountryField(_("Country"), blank=True, null=True)  # ✅ added
 
     def str(self):
         return self.user.username

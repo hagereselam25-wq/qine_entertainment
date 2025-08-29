@@ -177,10 +177,7 @@ def user_signup(request):
             amount = 500 if plan == 'monthly' else 5000
             tx_ref = f"sub-{uuid.uuid4()}"
 
-            # Get country from form POST
-            country = request.POST.get('country', 'Other')  # default to 'Other'
-
-            # Create subscription with country
+            # Create subscription
             StreamingSubscription.objects.create(
                 user=user,
                 full_name=username,
@@ -188,8 +185,7 @@ def user_signup(request):
                 subscription_type=plan,
                 chapa_tx_ref=tx_ref,
                 amount=amount,
-                is_paid=False,
-                country=country
+                is_paid=False
             )
 
             # Create transaction
@@ -230,10 +226,8 @@ def user_signup(request):
     else:
         form = CustomUserSignupForm()
 
-    # Pass a list of countries for dropdown
-    countries = ['Ethiopia', 'USA', 'UK', 'Canada', 'Germany', 'Other']
+    return render(request, 'streaming/user_signup.html', {'form': form})
 
-    return render(request, 'streaming/user_signup.html', {'form': form, 'countries': countries})
 
 def user_login(request):
     if request.method == 'POST':

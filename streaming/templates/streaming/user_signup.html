@@ -84,15 +84,6 @@
                 {{ form.plan.errors }}
             </div>
 
-            <div style="flex-basis: 100%;">
-                <label for="id_country">{% trans "Country" %}</label>
-                <select name="country" id="id_country" required>
-                    {% for c in countries %}
-                        <option value="{{ c }}">{{ c }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
             <button type="submit">{% trans "Sign Up" %}</button>
         </form>
     </div>
