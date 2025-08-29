@@ -10,32 +10,72 @@
     body { font-family: 'Poppins', sans-serif; background:#f8f9fa; }
 
     /* --- Navbar --- */
-    header { 
-      background: rgba(248,240,232,0.6);   /* ✅ 60% transparent */
-      backdrop-filter: blur(8px);          /* ✅ glass effect */
-      padding:0.6rem 5%; 
-      position:fixed; 
-      width:100%; 
-      top:0; 
-      z-index:100; 
-      display:flex; 
-      justify-content:space-between; 
-      align-items:center; 
-      height:60px;
-      transition: background 0.4s ease;   /* ✅ smooth transition */
-    }
-    header h1 { color:#d46a2f; margin:0; font-size:1.4rem; }
-    nav a { 
-      margin-left:1rem; 
-      text-decoration:none; 
-      color:#2c2c2c; 
-      transition: color 0.3s, transform 0.3s; 
-      font-size:0.95rem; 
-    }
-    nav a:hover { 
-      color:#d46a2f; 
-      transform: translateY(-2px);       /* ✅ smooth hover animation */
-    }
+   .navbar {
+  height: 70px;               /* fixed height for navbar */
+  display: flex;
+  align-items: center;        /* center logo + links vertically */
+  justify-content: space-between;
+  padding: 0 5%;              /* horizontal only */
+  position: fixed;
+  width: 100%;
+  top: 0;
+  background: rgba(248, 240, 232, 0.5);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.navbar .logo img {
+  max-height: 80%;           /* logo fills ~80% of navbar height */
+  width: auto;               /* keeps proportions */
+  display: block;
+}
+
+
+.navbar .nav-links {
+  display: flex;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.navbar .nav-links li a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.navbar .nav-links li a:hover {
+  background: rgba(212,106,47,0.1);
+}
+
+/* Login & Signup buttons */
+.navbar .login-btn,
+.navbar .signup-btn {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  border-radius: 20px;
+  text-decoration: none;
+  background: linear-gradient(135deg,#d46a2f,#f28a3c);
+  transition: all 0.25s ease;
+}
+
+.navbar .login-btn:hover,
+.navbar .signup-btn:hover {
+  background: linear-gradient(135deg,#b85421,#e6792f);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(242,138,60,.35);
+}
+
 
     main { margin-top:90px; padding:1rem 5%; }
 
@@ -106,10 +146,38 @@
 <body>
 
 <header>
-  <h1>Cinema</h1>
-  <nav>
-    <a href="{% url 'home' %}">Home</a>
-  </nav>
+
+  <nav class="navbar">
+    <div class="logo">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
+        </a>
+    </div>
+    <ul class="nav-links">
+        <li><a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+        <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
+        <li><a href="{% url 'about' %}">About</a></li>
+        <li><a href="{% url 'contact' %}">Contact</a></li>
+
+        {% if user.is_authenticated %}
+            <li>
+                <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
+                    {% if profile and profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
+                    {{ user.username }}
+                </a>
+            </li>
+            <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
+        {% else %}
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
+            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
+        {% endif %}
+    </ul>
+</nav>
 </header>
 
 <main>

@@ -1,7 +1,7 @@
 from pathlib import Path
 import os
 import secrets
-
+from django.utils.translation import gettext_lazy as _
 # locates our project base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -74,7 +74,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'translations.context_processors.translation',        
+                'translations.context_processors.translation',    
+                'streaming.context_processors.user_profile_context',    
                     ],
         },
     },
@@ -103,7 +104,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en'
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -111,10 +112,8 @@ USE_L10N = True
 USE_TZ = True
 
 LANGUAGES = [
-    ('en', 'English'),
-    ('am', 'Amharic'),
-    ('ti', 'Tigrigna'),
-    ('om', 'Oromiffa'),
+    ('en', _('English')),
+    ('am', _('Amharic')),
 ]
 
 LOCALE_PATHS = [

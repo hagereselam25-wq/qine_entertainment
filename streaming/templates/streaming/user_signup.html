@@ -12,17 +12,27 @@
 <body class="signup-page">
 
     <!-- Navbar -->
-    <nav class="navbar">
-        <div class="logo">🎬 CINEMA</div>
-        <ul class="nav-links">
-            <li><a href="{% url 'home' %}">Home</a></li>
-            <li><a href="{% url 'cinema' %}">Movies</a></li>
-            <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
-            <li><a href="{% url 'about' %}">About</a></li>
-            <li><a href="{% url 'contact' %}">Contact</a></li>
-            <li><a href="{% url 'streaming:login' %}" class="signup-btn">Login</a></li>
-        </ul>
-    </nav>
+   <nav class="navbar">
+    <div class="logo">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
+        </a>
+    </div>
+    <ul class="nav-links">
+        <li> <a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+        <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
+        <li><a href="{% url 'about' %}">About</a></li>
+        <li><a href="{% url 'contact' %}">Contact</a></li>
+        {% if user.is_authenticated %}
+            <li><a href="{% url 'streaming:user_profile' %}" class="profile-btn"><i class="fas fa-user-circle"></i> {{ user.username }}</a></li>
+            <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
+        {% else %}
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
+            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
+        {% endif %}
+    </ul>
+</nav>
 
     <!-- Signup Container -->
     <div class="signup-container">

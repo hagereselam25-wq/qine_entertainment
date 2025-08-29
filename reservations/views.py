@@ -165,7 +165,7 @@ def payment_success(request):
     headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
 
     try:
-        response = requests.get(url, headers=headers, timeout=15)  #   timeout
+        response = requests.get(url, headers=headers, timeout=30)  #   timeout
         response.raise_for_status()
         chapa_data = response.json()
     except requests.exceptions.Timeout:

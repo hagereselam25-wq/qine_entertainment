@@ -11,18 +11,28 @@
 <body>
 
 <!-- Navbar -->
-<div class="navbar">
-    <div class="logo">Streaming<span>.</span></div>
+<nav class="navbar">
+    <div class="logo">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
+        </a>
+    </div>
     <ul class="nav-links">
-        <li><a href="{% url 'home' %}">{% trans "Home" %}</a></li>
+        <li> <a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+        <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
+        <li><a href="{% url 'about' %}">About</a></li>
+        <li><a href="{% url 'contact' %}">Contact</a></li>
         {% if user.is_authenticated %}
-            <li><a href="{% url 'streaming:logout' %}">{% trans "Logout" %}</a></li>
+            <li><a href="{% url 'streaming:user_profile' %}" class="profile-btn"><i class="fas fa-user-circle"></i> {{ user.username }}</a></li>
+            <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
         {% else %}
-            <li><a href="{% url 'streaming:login' %}">{% trans "Login" %}</a></li>
-            <li><a href="{% url 'streaming:signup' %}">{% trans "Sign Up" %}</a></li>
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
+            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
         {% endif %}
     </ul>
-</div>
+</nav>
+
 
 <div class="profile-container">
 
@@ -51,7 +61,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3>{% trans "Watch History" %}</h3
 
-{% if watch_history %}
+        {% if watch_history %}
             <form id="clear-history-form" method="post">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger btn-sm">Clear History</button>
