@@ -134,3 +134,6 @@ CHAPA_VERIFY_URL = env("CHAPA_VERIFY_URL")
 # Default primary key field type
 # ======================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Redirect users to this login page when @login_required is used
+LOGIN_URL = '/streaming/login/'
