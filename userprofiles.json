@@ -1,0 +1,12 @@
+[
+{
+  "model": "streaming.userprofile",
+  "pk": 1,
+  "fields": {
+    "user": 4,
+    "profile_picture": "profiles/vvvvv/analytics.png",
+    "bio": "",
+    "history_cleared_at": null
+  }
+}
+]

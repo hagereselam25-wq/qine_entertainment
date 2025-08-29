@@ -649,17 +649,3 @@ def rate_video(request, content_id):
     return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 
 
-import os
-from django.http import HttpResponse
-from django.core.management import call_command
-from django.conf import settings
-
-def load_superuser(request):
-    # Path to your users.json file
-    json_file = os.path.join(settings.BASE_DIR,  'users.json')
-    
-    try:
-        call_command('loaddata', json_file)
-        return HttpResponse("Superuser loaded successfully!")
-    except Exception as e:
-        return HttpResponse(f"Error loading superuser: {e}")
