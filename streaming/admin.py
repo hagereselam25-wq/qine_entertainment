@@ -224,10 +224,7 @@ class StreamingAnalyticsProxyAdmin(admin.ModelAdmin):
         languages = [l["language"] for l in lang_qs]
         language_counts = [l["count"] for l in lang_qs]
 
-        # Country views (from logs)
-        country_qs = StreamViewLog.objects.values("country").annotate(total=Sum("views"))
-        countries = [c["country"] or "Unknown" for c in country_qs]
-        country_views = [c["total"] for c in country_qs]
+       
 
         extra_context = extra_context or {}
         extra_context.update({
@@ -251,8 +248,6 @@ class StreamingAnalyticsProxyAdmin(admin.ModelAdmin):
             "genre_counts": genre_counts,
             "languages": languages,
             "language_counts": language_counts,
-            "countries": countries,
-            "country_views": country_views,
         })
 
         return super().changelist_view(request, extra_context=extra_context)

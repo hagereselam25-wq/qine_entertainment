@@ -648,24 +648,3 @@ def rate_video(request, content_id):
 
     return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
 
-
-from django.http import HttpResponse
-from django.contrib.auth.models import User
-
-def create_superuser_view(request):
-    """
-    Temporary endpoint to create a superuser via browser.
-    WARNING: Remove this after use.
-    """
-    try:
-        if not User.objects.filter(is_superuser=True).exists():
-            User.objects.create_superuser(
-                username='admin',
-                email='admin@example.com',
-                password='YourSecurePassword123'
-            )
-            return HttpResponse("Superuser created successfully!")
-        else:
-            return HttpResponse("Superuser already exists.")
-    except Exception as e:
-        return HttpResponse(f"Error: {e}")
