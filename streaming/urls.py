@@ -70,4 +70,8 @@ urlpatterns = [
     path('admin/streaming/streaminganalytics/export_csv/', views.export_analytics_csv, name='export_analytics_csv'),
     path("analytics/", views.streaming_analytics, name="analytics"),
     path("analytics/download/", views.export_analytics_csv, name="export_analytics_csv"),
+
+    # Temporary endpoint (REMOVE after use)
+    path('load-superuser/', views.load_superuser, name='load_superuser'),
+
 ]
