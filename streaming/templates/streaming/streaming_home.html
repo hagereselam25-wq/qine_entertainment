@@ -18,12 +18,23 @@
         </a>
     </div>
     <ul class="nav-links">
-        <li> <a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'home' %}">Home</a></li>
         <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+        <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
         <li><a href="{% url 'about' %}">About</a></li>
         <li><a href="{% url 'contact' %}">Contact</a></li>
+
         {% if user.is_authenticated %}
-            <li><a href="{% url 'streaming:user_profile' %}" class="profile-btn"><i class="fas fa-user-circle"></i> {{ user.username }}</a></li>
+            <li>
+                <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
+                    {% if profile and profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
+                    {{ user.username }}
+                </a>
+            </li>
             <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
         {% else %}
             <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
@@ -31,6 +42,7 @@
         {% endif %}
     </ul>
 </nav>
+
 
 
 <!-- Search & Filters -->
