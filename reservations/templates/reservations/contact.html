@@ -6,8 +6,8 @@
     <title>{% trans "Contact Us" %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body class="contact-page">
-<nav class="navbar" style="background-color: rgba(0, 0, 0, 0.7);">
+<body>
+<nav class="navbar">
     <div class="logo">
         <a href="{% url 'home' %}">
             <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
@@ -23,7 +23,11 @@
         {% if user.is_authenticated %}
             <li>
                 <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
-                    <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% if profile and profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
                     {{ user.username }}
                 </a>
             </li>

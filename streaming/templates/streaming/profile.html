@@ -18,13 +18,23 @@
         </a>
     </div>
     <ul class="nav-links">
-        <li> <a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'home' %}">Home</a></li>
         <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
         <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
         <li><a href="{% url 'about' %}">About</a></li>
         <li><a href="{% url 'contact' %}">Contact</a></li>
+
         {% if user.is_authenticated %}
-            <li><a href="{% url 'streaming:user_profile' %}" class="profile-btn"><i class="fas fa-user-circle"></i> {{ user.username }}</a></li>
+            <li>
+                <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
+                    {% if profile and profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
+                    {{ user.username }}
+                </a>
+            </li>
             <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
         {% else %}
             <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
@@ -38,16 +48,21 @@
 
     <!-- Profile Card -->
     <div class="profile-card card shadow-lg rounded-3 p-4 mb-4">
-        <img src="{{ profile.profile_picture.url }}" alt="{% trans 'Profile Picture' %}" class="rounded-circle mb-3" style="width:120px;height:120px;">
-        <div class="profile-info text-center">
-            <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
-            <form method="post" enctype="multipart/form-data" class="profile-form mt-2">
-                {% csrf_token %}
-                {{ form.profile_picture }}
-                <button type="submit" class="btn btn-primary btn-sm mt-2">{% trans "Update Picture" %}</button>
-            </form>
-        </div>
+    <div class="profile-info text-center">
+        <img src="{{ profile.profile_picture.url }}" 
+             alt="{% trans 'Profile Picture' %}" 
+             class="rounded-circle mb-3" 
+             style="width:120px;height:120px;">
+        <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+        <form method="post" enctype="multipart/form-data" class="profile-form mt-2">
+            {% csrf_token %}
+            {{ form.profile_picture }}
+            <button type="submit" class="btn btn-primary btn-sm mt-2">
+                {% trans "Update Picture" %}
+            </button>
+        </form>
     </div>
+</div>
 
     <!-- Stats -->
     <div class="stats-card card shadow-lg rounded-3 p-4 mb-4">
@@ -59,15 +74,17 @@
     <!-- Watch History -->
     <div class="history-card card shadow-lg rounded-3 p-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>{% trans "Watch History" %}</h3
-
-        {% if watch_history %}
-            <form id="clear-history-form" method="post">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger btn-sm">Clear History</button>
-            </form>
-            {% endif %}
+            <h3>{% trans "Watch History" %}</h3>
         </div>
+
+       {% if watch_history %}
+        <form id="clear-history-form" method="post" action="{% url 'streaming:clear_watch_history' %}">
+            {% csrf_token %}
+            <div style="text-align:center; margin-bottom:10px;">
+                <button type="submit" class="btn btn-danger btn-sm">Clear History</button>
+            </div>
+        </form>
+        {% endif %}
 
         <table class="table table-striped" id="history-table">
             <thead>
@@ -95,33 +112,41 @@
 
 <!-- Confirmation JS + AJAX for clearing watch history -->
 <script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 document.getElementById('clear-history-form')?.addEventListener('submit', function(e){
     e.preventDefault();
-    if(!confirm('Are you sure you want to clear your watch history? This cannot be undone.')){
-        return;
-    }
+    if(!confirm('Are you sure you want to clear your watch history? This cannot be undone.')) return;
 
-    fetch("{% url 'streaming:clear_watch_history' %}", {
+    const csrftoken = getCookie('csrftoken');
+
+    fetch(this.action, {
         method: "POST",
         headers: {
-            "X-CSRFToken": "{{ csrf_token }}",
+            "X-CSRFToken": csrftoken,
             "Accept": "application/json",
         },
     })
     .then(res => res.json())
     .then(data => {
         if(data.success){
-            // Clear table
-            const tbody = document.querySelector('#history-table tbody');
-            tbody.innerHTML = '';
-            document.getElementById('total-videos').innerText = 0;
-            document.getElementById('total-watch-time').innerText = 0;
-            if(!document.getElementById('no-history')){
-                const p = document.createElement('p');
-                p.id = 'no-history';
-                p.innerText = 'No watch history found.';
-                document.querySelector('.history-card').appendChild(p);
-            }
+            // Reload page after clearing to ensure new history is recorded
+            window.location.reload();
+        } else {
+            alert('Failed to clear history.');
         }
     })
     .catch(err => console.error(err));

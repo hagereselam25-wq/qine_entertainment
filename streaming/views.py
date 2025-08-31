@@ -393,6 +393,7 @@ def watch_video(request, content_id):
     return render(request, 'streaming/watch_video.html', context)
 
 # ------------------- Report Watch Time -------------------
+
 @csrf_exempt
 @require_POST
 @login_required
@@ -410,14 +411,17 @@ def report_watch_time(request, content_id):
     log, created = StreamViewLog.objects.get_or_create(
         user=request.user,
         content=content,
-        defaults={'views': 0, 'watch_time_seconds': 0}
+        defaults={'views': 0, 'watch_time_seconds': 0, 'last_viewed': timezone.now()}
     )
+
+    # Update last_viewed every time video is watched
+    log.last_viewed = timezone.now()
+    log.save(update_fields=['last_viewed'])
 
     if created:
         StreamingContent.objects.filter(pk=content.pk).update(unique_viewers=F('unique_viewers') + 1)
 
     if event == 'start':
-        # Increment only when video actually starts
         StreamViewLog.objects.filter(pk=log.pk).update(views=F('views') + 1)
         StreamingContent.objects.filter(pk=content.pk).update(total_plays=F('total_plays') + 1)
 
@@ -494,7 +498,7 @@ def user_profile(request):
     total_watch_time = 0
 
     for log in logs:
-        minutes = log.watch_time_seconds // 60
+        minutes = round(log.watch_time_seconds / 60)
         total_watch_time += minutes
         watch_history.append({
             'video_title': log.content.title,
