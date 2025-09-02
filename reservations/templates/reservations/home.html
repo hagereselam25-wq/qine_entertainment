@@ -43,6 +43,18 @@
             <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
         {% endif %}
     </ul>
+
+ <div id="google_translate_element">
+  <span class="translate-icon">🌐</span>
+  <ul class="translate-dropdown">
+    <li data-lang="en">English</li>
+    <li data-lang="am">Amharic</li>
+    <li data-lang="ti">Tigrigna</li>
+    <li data-lang="om">Oromifa</li>
+  </ul>
+</div>
+
+
 </nav>
 
 
@@ -69,7 +81,7 @@
                     {% else %}
                         <img src="{% static 'img/default_poster.jpg' %}" alt="{{ movie.title }}">
                     {% endif %}
-                    <h3>{{ movie.title }}</h3>
+                    <h3 class="notranslate">{{ movie.title }}</h3>
                     <a href="{% url 'seat_selection' movie.id %}" class="btn-small">Book Now</a>
                 </div>
             {% endfor %}
@@ -96,7 +108,7 @@
                     {% else %}
                         <img src="{% static 'img/default_poster.jpg' %}" alt="{{ content.title }}">
                     {% endif %}
-                    <h3>{{ content.title }}</h3>
+                    <h3 class="notranslate">{{ content.title }}</h3>
                     <a href="{% url 'streaming:watch_video' content.id %}" class="btn-small">Watch Now</a>
                 </div>
             {% endfor %}
@@ -144,13 +156,17 @@
         </div>
     </div>
     <p>&copy; 2025 MSTRS UOG. All rights reserved.</p>
-    <div id="google_translate_element"></div>
 </footer>
 
-<!-- Google Translate Widget -->
+<!-- Google Translate Script -->
 <script type="text/javascript">
   function googleTranslateElementInit() {
-    new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+    new google.translate.TranslateElement({
+      pageLanguage: 'en',
+      includedLanguages: 'am,ti,om',
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+      autoDisplay: false
+    }, 'google_translate_element');
   }
 </script>
 <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

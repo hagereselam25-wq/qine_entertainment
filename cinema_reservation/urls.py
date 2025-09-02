@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.urls import path, include
-
+from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static  #  Helps us serve media files in development
+from django.contrib.admin import AdminSite
 
 urlpatterns = [
     path('admin/', admin.site.urls),
