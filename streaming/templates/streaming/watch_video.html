@@ -2,48 +2,49 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height:100%;">
 <head>
   <meta charset="UTF-8">
   <title>{{ content.title }}</title>
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body style="background-color: black;">
+<body style="background-color: black; min-height:100%; display:flex; flex-direction:column;">
+
   <!-- Navbar -->
-<nav class="navbar" style="background-color: #efe9d5;">
-    <div class="logo">
-        <a href="{% url 'home' %}">
-            <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
-        </a>
-    </div>
-    <ul class="nav-links">
-        <li><a href="{% url 'home' %}">Home</a></li>
-        <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
-        <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
-        <li><a href="{% url 'about' %}">About</a></li>
-        <li><a href="{% url 'contact' %}">Contact</a></li>
+  <nav class="navbar" style="background-color: #efe9d5; position:sticky; top:0; z-index:1000; padding:10px 0;">
+      <div class="logo" style="margin-left:10px;">
+          <a href="{% url 'home' %}">
+              <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
+          </a>
+      </div>
+      <ul class="nav-links" style="margin-right:10px; display:flex; align-items:center; gap:15px;">
+          <li><a href="{% url 'home' %}">Home</a></li>
+          <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
+          <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
+          <li><a href="{% url 'about' %}">About</a></li>
+          <li><a href="{% url 'contact' %}">Contact</a></li>
 
-        {% if user.is_authenticated %}
-            <li>
-                <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
-                    {% if profile and profile.profile_picture %}
-                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
-                    {% else %}
-                        <i class="fas fa-user-circle"></i>
-                    {% endif %}
-                    {{ user.username }}
-                </a>
-            </li>
-            <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
-        {% else %}
-            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
-            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
-        {% endif %}
-    </ul>
-</nav>
+          {% if user.is_authenticated %}
+              <li>
+                  <a href="{% url 'streaming:user_profile' %}" class="profile-btn" style="display:flex; align-items:center; gap:5px;">
+                      {% if profile and profile.profile_picture %}
+                          <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img" style="height:30px; width:30px; border-radius:50%;">
+                      {% else %}
+                          <i class="fas fa-user-circle" style="font-size:28px;"></i>
+                      {% endif %}
+                      <span style="font-size:14px;">{{ user.username }}</span>
+                  </a>
+              </li>
+              <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
+          {% else %}
+              <li><a href="{% url 'streaming:login' %}" class="login-btn" style="font-size:14px;">Login</a></li>
+              <li><a href="{% url 'streaming:signup' %}" class="signup-btn" style="font-size:14px;">Sign Up</a></li>
+          {% endif %}
+      </ul>
+  </nav>
 
- <div class="watch-main-container">
-
+  <!-- Main Content -->
+  <div class="watch-main-container" style="flex:1; padding:20px;">
     {% if video_url %}
       <!-- Video Player Wrapper for 16:9 -->
       <div class="video-wrapper">
@@ -54,19 +55,18 @@
           {% endif %}
           {% trans "Your browser does not support the video tag." %}
         </video>
-  
 
-
-      {% if is_hls %}
-        <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-      {% endif %}
+        {% if is_hls %}
+          <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+        {% endif %}
+      </div>
 
       <!-- Rating Section -->
-      <div class="rating-container">
+      <div class="rating-container" style="margin-top:20px;">
         <h3>{% trans "Rate this video:" %}</h3>
         <div id="star-rating">
           {% for i in "12345" %}
-            <span class="star" data-value="{{ i }}">&#9733;</span>
+            <span class="star" data-value="{{ i }}" style="font-size:24px; cursor:pointer;">&#9733;</span>
           {% endfor %}
         </div>
         <span id="rating-value">0</span>
@@ -79,12 +79,13 @@
       </div>
 
       <!-- Info Section -->
-      <div class="info-container">
+      <div class="info-container" style="margin-top:20px;">
         <h2>{{ content.title }}</h2>
         <p>{% trans "Category:" %} {{ content.get_category_display }}</p>
         <p>{% trans "Duration:" %} {{ content.duration_minutes }} {% trans "minutes" %}</p>
       </div>
 
+      <!-- Video + Rating Script -->
       <script>
       (function() {
         const video = document.getElementById('video-player');
@@ -132,8 +133,7 @@
         }
 
         video.addEventListener("play", () => { isPlaying = true; sendStartIfNeeded(); lastTime = video.currentTime; });
-
-video.addEventListener("pause", () => { isPlaying = false; flush(); });
+        video.addEventListener("pause", () => { isPlaying = false; flush(); });
         video.addEventListener("timeupdate", () => {
           if (!isPlaying) return;
           const now = video.currentTime;
@@ -167,15 +167,12 @@ video.addEventListener("pause", () => { isPlaying = false; flush(); });
         stars.forEach(star => {
           const starValue = parseInt(star.dataset.value);
 
-          // Hover effect
           star.addEventListener('mouseover', () => highlightStars(starValue));
           star.addEventListener('mouseout', () => highlightStars(ratingInput?.value || 0));
 
-          // Click effect
           star.addEventListener('click', () => {
             ratingInput.value = starValue;
 
-            // Send to server
             fetch("{% url 'streaming:rate_video' content.id %}", {
               method: "POST",
               headers: {
@@ -201,5 +198,27 @@ video.addEventListener("pause", () => { isPlaying = false; flush(); });
       <p>{% trans "No video available." %}</p>
     {% endif %}
   </div>
+
+  <!-- Footer -->
+  <footer class="site-footer" style="background:#111; color:#fff; text-align:center; padding:20px 0; margin-top:auto;">
+      <div class="footer-content">
+          <div class="social-icons" style="margin-bottom:10px;">
+              <a href="https://facebook.com" target="_blank" aria-label="Facebook" style="margin:0 8px; color:#fff;">
+                  <i class="fab fa-facebook-f"></i>
+              </a>
+              <a href="https://twitter.com" target="_blank" aria-label="Twitter" style="margin:0 8px; color:#fff;">
+                  <i class="fab fa-twitter"></i>
+              </a>
+              <a href="https://instagram.com" target="_blank" aria-label="Instagram" style="margin:0 8px; color:#fff;">
+                  <i class="fab fa-instagram"></i>
+              </a>
+              <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" style="margin:0 8px; color:#fff;">
+                  <i class="fab fa-linkedin-in"></i>
+              </a>
+          </div>
+      </div>
+      <p>&copy; Qine Entertainment 2025. All rights reserved.</p>
+  </footer>
+
 </body>
 </html>

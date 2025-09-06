@@ -59,7 +59,6 @@ class CustomUserSignupForm(UserCreationForm):
             # Save country in UserProfile
             UserProfile.objects.create(
                 user=user,
-                country=self.cleaned_data['country']
             )
         return user
 # ------------------- Profile Update Form -------------------

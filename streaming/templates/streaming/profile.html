@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Include FontAwesome for camera icon -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -43,25 +45,36 @@
     </ul>
 </nav>
 
-
 <div class="profile-container">
 
     <!-- Profile Card -->
-    <div class="profile-card card shadow-lg rounded-3 p-4 mb-4">
-    <div class="profile-info text-center">
-        <img src="{{ profile.profile_picture.url }}" 
-             alt="{% trans 'Profile Picture' %}" 
-             class="rounded-circle mb-3" 
-             style="width:120px;height:120px;">
-        <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
-        <form method="post" enctype="multipart/form-data" class="profile-form mt-2">
-            {% csrf_token %}
-            {{ form.profile_picture }}
-            <button type="submit" class="btn btn-primary btn-sm mt-2">
-                {% trans "Update Picture" %}
-            </button>
-        </form>
-    </div>
+   <!-- Profile Card -->
+<div class="profile-card card shadow-lg rounded-3 p-4 mb-4">
+  <div class="profile-info text-center">
+      <img src="{{ profile.profile_picture.url }}" 
+           alt="{% trans 'Profile Picture' %}" 
+           class="rounded-circle mb-3" 
+           style="width:120px;height:120px;object-fit:cover;">
+
+      <h2>{{ request.user.get_full_name|default:request.user.username }}</h2>
+
+      <form method="post" enctype="multipart/form-data" class="profile-form mt-2">
+          {% csrf_token %}
+          <!-- Hidden file input -->
+          <input type="file" name="profile_picture" id="profilePictureInput" style="display:none;">
+
+          <!-- Styled button -->
+          <button type="button" onclick="document.getElementById('profilePictureInput').click();" 
+                  style="padding:8px 16px; background:#e5893e; color:#fff; border:none; border-radius:6px; cursor:pointer; margin-top:10px;">
+              Upload Profile
+          </button>
+
+          <!-- Submit button -->
+          <button type="submit" class="btn btn-primary btn-sm" style="margin-top:10px; margin-left:5px;">
+              {% trans "Save" %}
+          </button>
+      </form>
+  </div>
 </div>
 
     <!-- Stats -->
@@ -110,8 +123,49 @@
     </div>
 </div>
 
-<!-- Confirmation JS + AJAX for clearing watch history -->
+<!-- Footer -->
+<footer class="site-footer">
+    <div class="footer-content">
+        <div class="social-icons">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+        </div>
+    </div>
+    <p>&copy; Qine Entertainment 2025. All rights reserved.</p>
+</footer>
+
+<!-- JS -->
 <script>
+// Preview selected image before upload
+const input = document.getElementById('profile-picture-input');
+const preview = document.getElementById('profile-img-preview');
+
+input.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+
+// Clicking on profile image or camera icon opens file select
+preview.addEventListener('click', () => input.click());
+</script>
+
+<script>
+// CSRF helper for clearing history
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -127,6 +181,7 @@ function getCookie(name) {
     return cookieValue;
 }
 
+// Clear history AJAX
 document.getElementById('clear-history-form')?.addEventListener('submit', function(e){
     e.preventDefault();
     if(!confirm('Are you sure you want to clear your watch history? This cannot be undone.')) return;
@@ -143,7 +198,6 @@ document.getElementById('clear-history-form')?.addEventListener('submit', functi
     .then(res => res.json())
     .then(data => {
         if(data.success){
-            // Reload page after clearing to ensure new history is recorded
             window.location.reload();
         } else {
             alert('Failed to clear history.');

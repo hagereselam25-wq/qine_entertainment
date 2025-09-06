@@ -9,9 +9,9 @@
     <!-- Link to your global CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body class="seat-selection-body">
+<body class="seat-selection-body" style="margin:0; padding:0;">
 
-    <!-- Navbar -->
+<!-- Navbar -->
 <nav class="navbar">
     <div class="logo">
         <a href="{% url 'home' %}">
@@ -19,22 +19,38 @@
         </a>
     </div>
     <ul class="nav-links">
-        <li> <a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'home' %}">Home</a></li>
         <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
         <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
         <li><a href="{% url 'about' %}">About</a></li>
         <li><a href="{% url 'contact' %}">Contact</a></li>
+
         {% if user.is_authenticated %}
-            <li><a href="{% url 'streaming:user_profile' %}" class="profile-btn"><i class="fas fa-user-circle"></i> {{ user.username }}</a></li>
+            <li>
+                <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
+                    {% if profile and profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
+                    {{ user.username }}
+                </a>
+            </li>
             <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
         {% else %}
             <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
             <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
         {% endif %}
     </ul>
+
+
 </nav>
 
-    <h1>{% blocktrans with title=movie.title %}Seat Selection for {{ title }}{% endblocktrans %}</h1>
+
+    <!-- Add top spacing so content is not hidden behind fixed navbar -->
+    <h1 style="margin-top:100px; text-align:center;">
+        {% blocktrans with title=movie.title %}Seat Selection for {{ title }}{% endblocktrans %}
+    </h1>
 
     <div class="seat-selection-form">
     <form method="POST">
@@ -93,6 +109,26 @@
             <button onclick="closePopup()">{% trans "Close" %}</button>
         </div>
     </div>
+<!-- Footer -->
+<footer class="site-footer" style="margin-top:50px;">
+    <div class="footer-content">
+        <div class="social-icons">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+        </div>
+    </div>
+    <p>&copy; Qine Entertainment 2025. All rights reserved.</p>
+</footer>
 
     <!-- Link to your global JS -->
     <script src="{% static 'js/scripts.js' %}"></script>

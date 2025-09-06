@@ -10,6 +10,45 @@
 
     <!-- Link main CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+body.login-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Make navbar fixed if not already */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000; /* ensure it's on top */
+}
+
+/* Add top spacing to content so it’s below navbar */
+.login-container {
+    flex: 1;
+    margin-top: 80px; /* match navbar height */
+    padding: 20px;
+}
+
+/* Footer full width at bottom */
+.site-footer {
+    background: #222;
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    width: 100%;
+    margin-top: auto;
+}
+.site-footer .social-icons a {
+    color: #fff;
+    margin: 0 10px;
+    text-decoration: none;
+}
+</style>
+
 </head>
 <body class="login-page">
     <!-- Navbar -->
@@ -34,7 +73,6 @@
         {% endif %}
     </ul>
 </nav>
-
 
     <!-- Login Container -->
     <div class="login-container">
@@ -64,6 +102,27 @@
             <a href="{% url 'streaming:signup' %}">{% trans "Sign up" %}</a>
         </p>
     </div>
+
+    <!-- Footer -->
+<footer class="site-footer">
+    <div class="footer-content">
+        <div class="social-icons">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+        </div>
+    </div>
+    <p>&copy; Qine Entertainment 2025. All rights reserved.</p>
+</footer>
 
     <!-- Link main JS -->
     <script src="{% static 'js/scripts.js' %}"></script>

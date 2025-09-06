@@ -1,9 +1,42 @@
-
 {% load i18n static %}
 
 {% block content %}
-<div class="container" style="padding:40px 5%; font-family: 'Poppins', sans-serif;">
 
+<!-- Include CSS -->
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+<body style="padding-top:80px; font-family: 'Poppins', sans-serif;"> <!-- Adjust padding to match navbar height -->
+
+<!-- Navbar -->
+<nav class="navbar" style="position:fixed; top:0; left:0; width:100%; z-index:1000;">
+    <div class="logo">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
+        </a>
+    </div>
+    <ul class="nav-links">
+        <li><a href="{% url 'admin:index' %}">Admin</a></li>
+
+        {% if user.is_authenticated %}
+            <li>
+                <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
+                    {% if profile and profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
+                    {{ user.username }}
+                </a>
+            </li>
+            <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
+        {% else %}
+            <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
+            <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+<div class="container" style="padding:40px 5%;">
     <h1 style="text-align:center; margin-bottom:40px; color:#d46a2f;">📊 Streaming Analytics Dashboard</h1>
 
     <!-- KPI Cards -->
@@ -35,8 +68,28 @@
         <div id="genreChart" class="chart-card"></div>
         <div id="languageChart" class="chart-card"></div>
     </div>
-
 </div>
+
+<!-- Footer -->
+<footer class="site-footer">
+    <div class="footer-content">
+        <div class="social-icons">
+            <a href="https://facebook.com" target="_blank" aria-label="Facebook">
+                <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://twitter.com" target="_blank" aria-label="Twitter">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://instagram.com" target="_blank" aria-label="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+            <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">
+                <i class="fab fa-linkedin-in"></i>
+            </a>
+        </div>
+    </div>
+    <p>&copy; Qine Entertainment 2025. All rights reserved.</p>
+</footer>
 
 <!-- Styles for cards and charts -->
 <style>
@@ -113,7 +166,7 @@
         hovertemplate: '%{x}<br>Views: %{y}<extra></extra>'
     }], {...plotLayoutDefaults, title: "Top Content by Views", xaxis:{title:'Content'}, yaxis:{title:'Views'}}, {responsive:true, displayModeBar:false, scrollZoom:true});
 
-// Completion Chart (Line)
+    // Completion Chart (Line)
     Plotly.newPlot('completionChart', [{
         x: labels,
         y: completionRates,
@@ -161,4 +214,5 @@
     }], {...plotLayoutDefaults, title:"Views by Country", xaxis:{title:'Views'}, yaxis:{title:'Country'}}, {responsive:true, displayModeBar:false, scrollZoom:true});
 
 </script>
+</body>
 {% endblock %}

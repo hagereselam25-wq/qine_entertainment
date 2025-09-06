@@ -8,24 +8,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "Thank You!" %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
 </head>
 <body class="signup-page">
 
-    <!-- Navbar -->
-   <nav class="navbar">
+  <!-- Navbar -->
+<nav class="navbar">
     <div class="logo">
         <a href="{% url 'home' %}">
             <img src="{% static 'images/logo3.png' %}" alt="Cinema Logo" style="height:70px;">
         </a>
     </div>
     <ul class="nav-links">
-        <li> <a href="{% url 'home' %}">Home</a></li>
+        <li><a href="{% url 'home' %}">Home</a></li>
         <li><a href="{% url 'cinema' %}">Events/Cinema</a></li>
         <li><a href="{% url 'streaming:streaming_home' %}">Streaming</a></li>
         <li><a href="{% url 'about' %}">About</a></li>
         <li><a href="{% url 'contact' %}">Contact</a></li>
+
         {% if user.is_authenticated %}
-            <li><a href="{% url 'streaming:user_profile' %}" class="profile-btn"><i class="fas fa-user-circle"></i> {{ user.username }}</a></li>
+            <li>
+                <a href="{% url 'streaming:user_profile' %}" class="profile-btn">
+                    {% if profile and profile.profile_picture %}
+                        <img src="{{ profile.profile_picture.url }}" alt="{{ user.username }}" class="profile-img">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
+                    {{ user.username }}
+                </a>
+            </li>
             <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
         {% else %}
             <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
@@ -33,7 +44,6 @@
         {% endif %}
     </ul>
 </nav>
-
 
     <div class="signup-container thank-you-container">
         {% if subscription %}
