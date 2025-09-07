@@ -233,7 +233,7 @@ Enjoy your show!
 
 እባክዎ ከተያያዘው የQR ኮድ ጋር በመግቢያ ቦታ ያሳዩ።  
 
-
+ደስታ ይሁን በተመልከቱበት።
 """)
 
         email_msg = EmailMessage(subject, message, to=[reservation.email])
