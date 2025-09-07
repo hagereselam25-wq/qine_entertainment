@@ -1,17 +1,47 @@
-{% load i18n %}
-{% load static %}
-
+{% load i18n static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head>  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "Thank You!" %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    
-</head>
-<body class="signup-page">
+    <style>
+        /* QR section */
+        .qr-section {
+            margin: 20px auto;
+        }
+        .qr-code {
+            width: 250px !important;  /* minimized size */
+            height: 250px !important; /* square */
+            display: block;
+            margin: 0 auto 10px auto;
+            border: 2px solid #d46a2f;
+            border-radius: 10px;
+        }
+        .download-link {
+            display: inline-block;
+            font-size: 0.9rem;
+            color: #d46a2f;
+            text-decoration: underline;
+            margin-top: 5px;
+        }
+        .hero {
+            padding: 100px 20px 50px 20px;
+            text-align: center;
+        }
+        .success-msg {
+            margin-bottom: 20px;
+            color: #d46a2f;
+        }
+        .error-msg {
+            margin-top: 50px;
+            color: #dc3545;
+        }
+    </style>
+</head> 
 
+<body>
   <!-- Navbar -->
 <nav class="navbar">
     <div class="logo">
@@ -45,79 +75,38 @@
     </ul>
 </nav>
 
-    <div class="signup-container thank-you-container">
-        {% if subscription %}
-            <div class="subscription-card">
-                <h1 class="success-msg">✅ {% trans "Thank You for Subscribing!" %}</h1>
-                
-                <div class="subscription-details">
-                    <p><strong>{% trans "Name:" %}</strong> {{ subscription.full_name }}</p>
-                    <p><strong>{% trans "Email:" %}</strong> {{ subscription.email }}</p>
-                    <p><strong>{% trans "Type:" %}</strong> {{ subscription.subscription_type|capfirst }}</p>
-                    <p><strong>{% trans "Status:" %}</strong> {{ subscription.is_paid|yesno:_("Paid,Unpaid") }}</p>
-                    
-                    {% if subscription.qr_code %}
-                        <div class="qr-section">
-                            <img src="{{ subscription.qr_code.url }}" alt="{% trans 'QR Code' %}" class="qr-code">
-                            <a href="{{ subscription.qr_code.url }}" download class="download-btn">{% trans "Download Ticket" %}</a>
-                        </div>
-                    {% endif %}
-                </div>
+<!-- Hero / Message Section -->
+    <section class="hero">
+        <h2 class="success-msg">{% trans "Payment Successful!" %}</h2>
+        <p style="font-size:1.1rem; margin-bottom: 30px;">
+            {% blocktrans with username=reservation.user seat=reservation.seat.seat_number %}  
+                Thank you{{ username }}. Your seat {{ seat }} is confirmed.  
+            {% endblocktrans %}
+        </p>
 
-                <div class="back-home">
-                    <a href="{% url 'home' %}" class="home-btn">{% trans "Back to Home" %}</a>
-                </div>
-            </div>
+        {% if subscription.qr_code %}
+        <div class="qr-section">
+            <img src="{{ subscription.qr_code.url }}" alt="{% trans 'Your Ticket QR Code' %}" class="qr-code"/>
+            <p>
+                <a href="{{ subscription.qr_code.url }}" download="ticket_qr_{{ subscription.id }}.png" class="download-link">⬇️ {% trans "Download QR Code" %}</a>
+            </p>
+        </div>
         {% else %}
-            <h1 class="error-msg">{% trans "Subscription not found." %}</h1>
+        <p class="error-msg">{% trans "QR code is not available." %}</p>
         {% endif %}
-    </div>
+    </section>
 
-    <style>
-        /* Extra styling for ticket card */
-        .subscription-card {
-            max-width: 500px;
-            margin: 30px auto;
-            padding: 25px 30px;
-            background-color: #fff;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            text-align: center;
-        }
-        .subscription-card h1.success-msg {
-            color: #28a745;
-            margin-bottom: 20px;
-        }
-        .subscription-card .subscription-details p {
-            font-size: 16px;
-            margin: 8px 0;
-        }
-        .qr-section {
-            margin: 20px 0;
-        }
-        .qr-code {
-            width: 180px;
-            margin-bottom: 10px;
-        }
-        .download-btn, .home-btn {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            border-radius: 8px;
-            background-color: #ffcc00;
-            color: #fff;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .download-btn:hover, .home-btn:hover {
-            background-color: #ffcc00;
-        }
-        .error-msg {
-            color: #dc3545;
-            text-align: center;
-            margin-top: 50px;
-        }
-    </style>
-
+    <!-- Footer -->
+    <footer class="site-footer" style="background:#2d2d2d; color:#fff; padding:30px 20px; text-align:center; margin-top:50px;">
+        <div class="footer-content" style="margin-bottom:15px;">
+            <div class="social-icons" style="display:flex; justify-content:center; gap:15px;">
+                <a href="https://facebook.com" target="_blank" aria-label="Facebook" style="color:#fff; font-size:1.2rem;"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://twitter.com" target="_blank" aria-label="Twitter" style="color:#fff; font-size:1.2rem;"><i class="fab fa-twitter"></i></a>
+                <a href="https://instagram.com" target="_blank" aria-label="Instagram" style="color:#fff; font-size:1.2rem;"><i class="fab fa-instagram"></i></a>
+                <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" style="color:#fff; font-size:1.2rem;"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+        <p style="margin:0;">&copy; Qine Entertainment 2025. All rights reserved.</p>
+    </footer>
 </body>
 </html>

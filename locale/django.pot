@@ -1123,14 +1123,14 @@ msgstr ""
 #: .\streaming\views.py:111
 #, python-format
 msgid ""
-"CineHub Subscription\n"
+" Subscription\n"
 "Name: %(name)s\n"
 "Email: %(email)s\n"
 "Type: %(type)s"
 msgstr ""
 
 #: .\streaming\views.py:126
-msgid "🎫 CineHub Subscription Confirmed"
+msgid "🎫  Subscription Confirmed"
 msgstr ""
 
 #: .\streaming\views.py:127
@@ -1140,7 +1140,7 @@ msgid ""
 "\n"
 "Your %(plan)s subscription is now active!\n"
 "\n"
-"Thanks for choosing CineHub."
+"Thanks for choosing ."
 msgstr ""
 
 #: .\streaming\views.py:140

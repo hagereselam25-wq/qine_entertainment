@@ -19,3 +19,4 @@ def create_custom_seats(sender, instance, created, **kwargs):
                     seat_number=seat_label,
                     is_booked=False
                 )
+                

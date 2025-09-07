@@ -108,7 +108,7 @@ def verify_subscription_payment(request):
             elif subscription.subscription_type == 'annual':
                 subscription.access_expires_at = timezone.now() + timedelta(days=365)
 
-            qr_data = _("CineHub Subscription\nName: %(name)s\nEmail: %(email)s\nType: %(type)s") % {
+            qr_data = _("Qine Entertainment Subscription\nName: %(name)s\nEmail: %(email)s\nType: %(type)s") % {
                 'name': subscription.full_name,
                 'email': subscription.email,
                 'type': subscription.subscription_type
@@ -122,12 +122,23 @@ def verify_subscription_payment(request):
 
             subscription.save()
 
+            # ✅ Email with Amharic + English
+            email_body = (
+                "Hi %(name)s,\n\n"
+                "Your %(plan)s subscription is now active!\n\n"
+                "Thanks for choosing Qine Entertainem\n\n"
+                "-----------------------------\n"
+                "ሰላም %(name)s,\n\n"
+                "የእርስዎ የ%(plan)s የመዝናኛ መደበኛነት አሁን ተመዝግቧል!\n\n"
+                "ቅኔን ስለመረጡ እናመሰግናለን።"
+            ) % {
+                'name': subscription.full_name,
+                'plan': subscription.subscription_type
+            }
+
             email = EmailMessage(
-                subject=_("🎫 CineHub Subscription Confirmed"),
-                body=_("Hi %(name)s,\n\nYour %(plan)s subscription is now active!\n\nThanks for choosing CineHub.") % {
-                    'name': subscription.full_name,
-                    'plan': subscription.subscription_type
-                },
+                subject=_("🎫 Qine Entertainment Subscription Confirmed"),
+                body=email_body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[subscription.email],
             )
@@ -161,49 +172,22 @@ from django.conf import settings
 
 CHAPA_BASE_URL = "https://api.chapa.co/v1"
 
-
 def user_signup(request):
     if request.method == 'POST':
         form = CustomUserSignupForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = True
-            user.save()
-            login(request, user)
-
+            # Extract form data but DO NOT save the user yet
             plan = form.cleaned_data['plan']
             email = form.cleaned_data['email']
             username = form.cleaned_data['username']
+
             amount = 500 if plan == 'monthly' else 5000
             tx_ref = f"sub-{uuid.uuid4()}"
 
             # Get country from form POST
             country = request.POST.get('country', 'Other')  # default to 'Other'
 
-            # Create subscription with country
-            StreamingSubscription.objects.create(
-                user=user,
-                full_name=username,
-                email=email,
-                subscription_type=plan,
-                chapa_tx_ref=tx_ref,
-                amount=amount,
-                is_paid=False,
-                country=country
-            )
-
-            # Create transaction
-            Transaction.objects.create(
-                user=user,
-                tx_ref=tx_ref,
-                amount=amount,
-                email=email,
-                first_name=username,
-                last_name='',
-                status='initiated'
-            )
-
-            # Prepare Chapa payment
+            # Prepare Chapa payment payload first
             callback_url = request.build_absolute_uri(reverse('streaming:verify_subscription_payment'))
             chapa_payload = {
                 "amount": str(amount),
@@ -223,17 +207,49 @@ def user_signup(request):
             response_data = response.json()
 
             if response.status_code == 200 and response_data.get('status') == 'success':
+                # Now safe to create user, subscription, and transaction
+                user = form.save(commit=False)
+                user.is_active = True
+                user.save()
+                login(request, user)
+
+                StreamingSubscription.objects.create(
+                    user=user,
+                    full_name=username,
+                    email=email,
+                    subscription_type=plan,
+                    chapa_tx_ref=tx_ref,
+                    amount=amount,
+                    is_paid=False,
+                    country=country
+                )
+
+                Transaction.objects.create(
+                    user=user,
+                    tx_ref=tx_ref,
+                    amount=amount,
+                    email=email,
+                    first_name=username,
+                    last_name='',
+                    status='initiated'
+                )
+
+                # Redirect to Chapa checkout
                 return redirect(response_data['data']['checkout_url'])
             else:
                 messages.error(request, _("Failed to initialize payment: %(response)s") % {'response': response_data})
-                return redirect('streaming:signup')
+        else:
+            messages.error(request, _("Please correct the errors below."))
     else:
         form = CustomUserSignupForm()
 
-    # Pass a list of countries for dropdown
     countries = ['Ethiopia', 'USA', 'UK', 'Canada', 'Germany', 'Other']
 
     return render(request, 'streaming/user_signup.html', {'form': form, 'countries': countries})
+
+
+
+
 
 def user_login(request):
     if request.method == 'POST':
@@ -292,10 +308,10 @@ def streaming_home(request):
         else:
             content.signed_url = content.video_file.url if content.video_file else ""
 
-    # Distinct values for filters
-    categories = StreamingContent.objects.values_list("category", flat=True).distinct()
-    genres = StreamingContent.objects.values_list("genre", flat=True).distinct()
-    languages = StreamingContent.objects.values_list("language", flat=True).distinct()
+    # Distinct values for filters (remove duplicates while keeping order)
+    categories = list(dict.fromkeys([content.get_category_display() for content in contents]))
+    genres = list(dict.fromkeys([content.genre for content in contents]))
+    languages = list(dict.fromkeys([content.language for content in contents]))
 
     # Group by category for section display
     categorized_contents = defaultdict(list)
@@ -311,7 +327,6 @@ def streaming_home(request):
     }
 
     return render(request, "streaming/streaming_home.html", context)
-
 # ------------------- Watch Video -------------------
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect

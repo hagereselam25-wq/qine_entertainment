@@ -9,6 +9,24 @@
     <script src="{% static 'js/scripts.js' %}" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* Custom translation dropdown styles */
+        .translate-wrapper {
+            margin-left: 20px;
+        }
+        #custom-translate {
+            padding: 5px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        #custom-translate:focus {
+            outline: none;
+            border-color: #555;
+        }
+    </style>
 </head>
 <body>
 
@@ -44,19 +62,10 @@
         {% endif %}
     </ul>
 
- <div id="google_translate_element">
-  <span class="translate-icon">🌐</span>
-  <ul class="translate-dropdown">
-    <li data-lang="en">English</li>
-    <li data-lang="am">Amharic</li>
-    <li data-lang="ti">Tigrigna</li>
-    <li data-lang="om">Oromifa</li>
-  </ul>
-</div>
-
+    <!-- Working Translation Dropdown -->
+ 
 
 </nav>
-
 
 <!-- Hero Board -->
 <section class="hero">
@@ -155,46 +164,53 @@
             </a>
         </div>
     </div>
-    <p>&copy; Qine Entertainemnt 2025. All rights reserved.</p>
+    <p>&copy; Qine Entertainment 2025. All rights reserved.</p>
 </footer>
 
-<!-- Google Translate Script -->
-<script type="text/javascript">
-  function googleTranslateElementInit() {
-    new google.translate.TranslateElement({
-      pageLanguage: 'en',
-      includedLanguages: 'am,ti,om',
-      layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-      autoDisplay: false
-    }, 'google_translate_element');
-  }
+<!-- Translation Dropdown Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const select = document.getElementById('custom-translate');
+
+    select.addEventListener('change', function() {
+        const lang = this.value;
+        if (lang === 'en') {
+            // Reset translation
+            window.location.href = window.location.pathname;
+        } else {
+            // Redirect using Google Translate
+            const base = 'https://translate.google.com/translate';
+            const url = `${base}?hl=${lang}&sl=en&tl=${lang}&u=${encodeURIComponent(window.location.href)}`;
+            window.location.href = url;
+        }
+    });
+});
 </script>
-<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 <!-- Carousel Logic -->
 <script>
-  document.querySelectorAll(".carousel-section").forEach(section => {
+document.querySelectorAll(".carousel-section").forEach(section => {
     const container = section.querySelector(".carousel-container");
     const prev = section.querySelector(".carousel-arrow.prev");
     const next = section.querySelector(".carousel-arrow.next");
     let scrollAmount = container.clientWidth * 0.8;
 
     function updateArrows() {
-      prev.style.display = container.scrollLeft > 0 ? "block" : "none";
-      next.style.display = (container.scrollLeft + container.clientWidth < container.scrollWidth) ? "block" : "none";
+        prev.style.display = container.scrollLeft > 0 ? "block" : "none";
+        next.style.display = (container.scrollLeft + container.clientWidth < container.scrollWidth) ? "block" : "none";
     }
 
     prev.addEventListener("click", () => {
-      container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
     });
     next.addEventListener("click", () => {
-      container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
     });
 
     container.addEventListener("scroll", updateArrows);
     window.addEventListener("resize", updateArrows);
     updateArrows();
-  });
+});
 </script>
 
 </body>

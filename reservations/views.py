@@ -165,7 +165,7 @@ def payment_success(request):
     headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
 
     try:
-        response = requests.get(url, headers=headers, timeout=30)  #   timeout
+        response = requests.get(url, headers=headers, timeout=30)  # timeout
         response.raise_for_status()
         chapa_data = response.json()
     except requests.exceptions.Timeout:
@@ -197,18 +197,44 @@ def payment_success(request):
         transaction.status = "success"
         transaction.save()
 
-        #  Generate QR Code
+        # Generate QR Code
         qr = qrcode.make(_(f"Reservation ID: {reservation.id} - Seat: {reservation.seat.seat_number}"))
         buffer = BytesIO()
         qr.save(buffer, format="PNG")
         reservation.qr_code.save(f"qr_{reservation.id}.png", ContentFile(buffer.getvalue()))
         buffer.close()
 
-    #  Send confirmation email (only once)
+    # Send confirmation email (only once)
     if not reservation.email_sent:
-        subject = _("🎟 Your Cinema Ticket Confirmation")
-        message = _(f"Dear {reservation.user},\n\nYour ticket has been confirmed. "
-                    f"Seat: {reservation.seat.seat_number}")
+        subject = _("🎟 Your Cinema Ticket Confirmation | 🎟 የሲኒማ ትኬት ማረጋገጫ")
+
+        message = _(f"""
+Hello {reservation.user},
+
+✅ Your payment for '{reservation.movie.title}' has been confirmed.
+
+🎫 Seat: {reservation.seat.seat_number}
+📍 Movie: {reservation.movie.title}
+
+Please show the attached QR code at the entrance.
+
+Enjoy your show!
+
+
+------------------------------
+------------------------------
+
+ሰላም {reservation.user},
+
+✅ ለ '{reservation.movie.title}' የክፍያዎ ማረጋገጫ ተሳክቷል።
+
+🎫 መቀመጫ: {reservation.seat.seat_number}  
+📍 ፊልም: {reservation.movie.title}  
+
+እባክዎ ከተያያዘው የQR ኮድ ጋር በመግቢያ ቦታ ያሳዩ።  
+
+
+""")
 
         email_msg = EmailMessage(subject, message, to=[reservation.email])
         if reservation.qr_code:
@@ -288,7 +314,7 @@ def payment_verify(request):
         transaction.save()
 
         # Send confirmation email with QR
-        subject = _("🎟 Your Cinema Ticket Confirmation")
+        subject = _("🎟 Your Cinema Ticket Confirmation | 🎟 የሲኒማ ትኬት ማረጋገጫ")
         message = _(f"""
 Hello {reservation.user},
 
@@ -300,7 +326,24 @@ Hello {reservation.user},
 Please show the attached QR code at the entrance.
 
 Enjoy your show!
+
+
+------------------------------
+🇪🇹 አማርኛ ማረጋገጫ
+------------------------------
+
+ሰላም {reservation.user},
+
+✅ ለ '{reservation.movie.title}' የክፍያዎ ማረጋገጫ ተሳክቷል።
+
+🎫 መቀመጫ: {reservation.seat.seat_number}  
+📍 ፊልም: {reservation.movie.title}  
+
+እባክዎ ከተያያዘው የQR ኮድ ጋር በመግቢያ ቦታ ያሳዩ።  
+
+ደስታ ይሁን በተመልከቱበት።
 """)
+
         email = EmailMessage(subject, message, to=[reservation.email])
         email.attach(filename, buffer.getvalue(), 'image/png')
         email.send()

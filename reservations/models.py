@@ -9,8 +9,7 @@ class Movie(models.Model):
     show_time = models.DateTimeField(_("Show Time"))
 
     poster = models.ImageField(_("Poster"), upload_to='posters/', blank=True, null=True)
-    trailer_file = models.FileField(_("Trailer File"), upload_to='trailers/', blank=True, null=True)
-    trailer_url = models.URLField(_("Trailer URL"), blank=True, null=True)
+   
 
     num_rows = models.PositiveIntegerField(_("Number of Rows"), default=5)
     seats_per_row = models.PositiveIntegerField(_("Seats per Row"), default=10)
