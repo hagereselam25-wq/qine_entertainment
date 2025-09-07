@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 
-<h1 class="streaming-header">{% trans "Streaming Content" %}</h1>
+<h1 class="streaming-header">Streaming Content</h1>
 <nav class="navbar">
     <div class="logo">
         <a href="{% url 'home' %}">
@@ -36,14 +36,28 @@
                 </a>
             </li>
             <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
+            <!-- Google Translate -->
+<div id="google_translate_element" style="text-align:right; margin:10px 20px;"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+      pageLanguage: 'en', 
+      includedLanguages: 'am,ti,om', 
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+  }, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" 
+  src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">
+</script>
+
         {% else %}
             <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
             <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
         {% endif %}
     </ul>
+    
 </nav>
-
-
 
 <!-- Search & Filters -->
 <div class="streaming-filter-bar">
@@ -92,16 +106,16 @@
             <div class="streaming-thumbnail-placeholder"></div>
           {% endif %}
 
-          <h3>{{ content.title }}</h3>
-          <p>{% trans "Category:" %} {{ content.get_category_display }}</p>
-          <p>{% trans "Genre:" %} {{ content.genre }}</p>
-          <p>{% trans "Language:" %} {{ content.language }}</p>
-          <p>{% trans "Release Date:" %} {{ content.release_date }}</p>
-          <p>{% trans "Duration:" %} {{ content.duration_minutes }} {% trans "minutes" %}</p>
+          <!-- Title & Description: no translation -->
+          <h3 class="no-translation">{{ content.title }}</h3>
+          <p class="no-translation">Category: {{ content.get_category_display }}</p>
+          <p class="no-translation">Genre: {{ content.genre }}</p>
+          <p class="no-translation">Language: {{ content.language }}</p>
+          <p class="no-translation">Release Date: {{ content.release_date }}</p>
+          <p class="no-translation">Duration: {{ content.duration_minutes }} minutes</p>
 
           {% if content.video_file or content.video_url %}
             <a href="{% url 'streaming:watch_video' content.id %}" class="streaming-watch-btn">{% trans "Watch Now" %}</a>
-            <!-- Use signed_url for HLS streaming if needed -->
           {% else %}
             <span class="streaming-no-video">{% trans "No video available" %}</span>
           {% endif %}
@@ -116,6 +130,7 @@
 <p class="streaming-no-content">{% trans "No streaming content available yet." %}</p>
 {% endif %}
 {% endblock %}
+
 <!-- Footer -->
 <footer class="site-footer">
     <div class="footer-content">
@@ -147,7 +162,7 @@ document.addEventListener("DOMContentLoaded", function() {
   const filterBtn = document.getElementById("streamingFilterBtn");
   const cards = document.querySelectorAll(".streaming-card");
 
-function applyFilters() {
+  function applyFilters() {
     const search = searchInput.value.toLowerCase().trim();
     const category = categoryFilter.value;
     const genre = genreFilter.value;

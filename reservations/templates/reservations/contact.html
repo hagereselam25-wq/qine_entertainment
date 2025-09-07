@@ -36,31 +36,47 @@
             <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
             <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
         {% endif %}
+        
     </ul>
+    <!-- Google Translate -->
+<div id="google_translate_element" style="text-align:right; margin:10px 20px;"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+      pageLanguage: 'en', 
+      includedLanguages: 'am,ti,om', 
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+  }, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" 
+  src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">
+</script>
 </nav>
 
 
-    <div class="contact-container">
-        <h1>{% trans "Contact Us" %}</h1>
 
-        <!-- Feedback Form -->
-        <form method="POST" class="contact-form">
-            {% csrf_token %}
-            <input type="text" name="name" placeholder="{% trans 'Your Name' %}" required>
-            <input type="email" name="email" placeholder="{% trans 'Your Email' %}" required>
-            <textarea name="feedback" placeholder="{% trans 'Your Feedback' %}" rows="5" required></textarea>
-            <button type="submit">{% trans "Send Feedback" %}</button>
-        </form>
+<div class="contact-container">
+    <h1>{% trans "Contact Us" %}</h1>
 
-        <!-- Contact Info (Below Form) -->
-        <div class="contact-info">
-            <h2>{% trans "Get in Touch" %}</h2>
-            <p><strong>{% trans "Phone:" %}</strong> +251-900-123-456</p>
-            <p><strong>{% trans "Address:" %}</strong> Gondar, Ethiopia</p>
-            <p><strong>{% trans "Email:" %}</strong> MSTRS@cinema.com</p>
-        </div>
+    <!-- Feedback Form -->
+    <form method="POST" class="contact-form">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="{% trans 'Your Name' %}" required>
+        <input type="email" name="email" placeholder="{% trans 'Your Email' %}" required>
+        <textarea name="feedback" placeholder="{% trans 'Your Feedback' %}" rows="5" required></textarea>
+        <button type="submit">{% trans "Send Feedback" %}</button>
+    </form>
+
+    <!-- Contact Info (Below Form) -->
+    <div class="contact-info">
+        <h2>{% trans "Get in Touch" %}</h2>
+        <p><strong>{% trans "Phone:" %}</strong> +251-900-123-456</p>
+        <p><strong>{% trans "Address:" %}</strong> Gondar, Ethiopia</p>
+        <p><strong>{% trans "Email:" %}</strong> MSTRS@cinema.com</p>
     </div>
-    
+</div>
+
 <!-- Footer -->
 <footer class="site-footer">
     <div class="footer-content">
@@ -82,11 +98,11 @@
     <p>&copy; Qine Entertainemnt 2025. All rights reserved.</p>
 </footer>
 
-    {% if success %}
-    <script>
-        alert("{% trans 'Thank you for your feedback!' %}");
-        window.location.href = "{% url 'home' %}";
-    </script>
-    {% endif %}
+{% if success %}
+<script>
+    alert("{% trans 'Thank you for your feedback!' %}");
+    window.location.href = "{% url 'home' %}";
+</script>
+{% endif %}
 </body>
 </html>

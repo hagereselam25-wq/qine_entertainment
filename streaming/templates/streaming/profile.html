@@ -38,11 +38,28 @@
                 </a>
             </li>
             <li><a href="{% url 'streaming:logout' %}" class="logout-btn">Logout</a></li>
+                      <!-- Google Translate -->
+<div id="google_translate_element" style="text-align:right; margin:10px 20px;"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({
+      pageLanguage: 'en', 
+      includedLanguages: 'am,ti,om', 
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+  }, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" 
+  src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit">
+</script>
+
         {% else %}
             <li><a href="{% url 'streaming:login' %}" class="login-btn">Login</a></li>
             <li><a href="{% url 'streaming:signup' %}" class="signup-btn">Sign Up</a></li>
         {% endif %}
     </ul>
+
+
 </nav>
 
 <div class="profile-container">
