@@ -176,7 +176,7 @@ def user_signup(request):
     if request.method == 'POST':
         form = CustomUserSignupForm(request.POST)
         if form.is_valid():
-            # Extract form data but DO NOT save the user yet
+            # Extract form data but DO NOT save the yet
             plan = form.cleaned_data['plan']
             email = form.cleaned_data['email']
             username = form.cleaned_data['username']
@@ -672,3 +672,27 @@ def rate_video(request, content_id):
         })
 
     return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+
+# views.py
+import os
+from django.http import HttpResponse, Http404
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
+
+@login_required
+def serve_hls_key(request, key_filename):
+    """
+    Serve AES-128 HLS keys securely to authorized users.
+    key_filename: the name of the key file (UUID.key)
+    """
+    key_path = os.path.join(settings.MEDIA_ROOT, 'hls', 'keys', key_filename)
+
+    if not os.path.exists(key_path):
+        raise Http404("Key not found")
+
+    with open(key_path, 'rb') as f:
+        key_data = f.read()
+
+    response = HttpResponse(key_data, content_type='application/octet-stream')
+    response['Content-Disposition'] = f'inline; filename="{key_filename}"'
+    return response

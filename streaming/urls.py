@@ -11,6 +11,9 @@ urlpatterns = [
     path('verify/', verify_subscription_payment, name='verify_subscription_payment'),
     path('thankyou/', subscription_thankyou, name='subscription_thankyou'),
 
+    path('media/hls_keys/<str:key_filename>/', views.serve_hls_key, name='serve_hls_key'),
+    path('media/hls_keys/<str:key_filename>/', views.serve_hls_key, name='serve_hls_key'),
+
     # Streaming
     path('', views.streaming_home, name='streaming_home'),
     path('watch/<int:content_id>/', views.watch_video, name='watch_video'),

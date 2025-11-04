@@ -5,12 +5,11 @@ import hmac
 import hashlib
 from urllib.parse import urlencode
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 # ------------------- Signed URL Utilities -------------------
 def generate_signed_url(video_id, base_url, expire_seconds=300):
-    
-    #generate a signed URL for HLS videos (.m3u8)
-    
+    # generate a signed URL for HLS videos (.m3u8)
     if base_url.lower().endswith('.mp4'):
         return base_url
 
@@ -26,8 +25,7 @@ def generate_signed_url(video_id, base_url, expire_seconds=300):
     return f"{base_url}?{urlencode(query_params)}"
 
 def validate_signed_url(video_id, expires, signature):
-    #Verify that a signed URL is valid
-
+    # Verify that a signed URL is valid
     if int(expires) < time.time():
         return False
 
@@ -39,11 +37,7 @@ def validate_signed_url(video_id, expires, signature):
 
     return hmac.compare_digest(expected_signature, signature)
 
-import os
-import subprocess
-from django.core.exceptions import ValidationError
-
-# allowed video extensions
+# ------------------- Video Validation -------------------
 ALLOWED_VIDEO_EXTENSIONS = ['.mp4', '.mkv', '.avi', '.mov', '.flv', '.wmv', '.webm']
 
 def validate_video_extension(value):
@@ -51,14 +45,17 @@ def validate_video_extension(value):
     if ext not in ALLOWED_VIDEO_EXTENSIONS:
         raise ValidationError(f"Unsupported video format '{ext}'. Allowed: {ALLOWED_VIDEO_EXTENSIONS}")
 
-def convert_video_to_hls(video_path, output_dir, content_id, verbose=True):
-    
-    #convert any supported video to single-quality HLS. Output: MEDIA_ROOT/hls/<content_id>/
-   
+# ------------------- HLS Conversion -------------------
+def convert_video_to_hls(video_path, output_dir, content_id, verbose=True, encrypt=False, key_info_file=None):
+    """
+    Convert any supported video to HLS (.m3u8). Optionally apply AES-128 encryption.
+    Output: MEDIA_ROOT/hls/<content_id>/
+    """
+
     if not os.path.exists(video_path):
         raise FileNotFoundError(f"Video file not found: {video_path}")
 
-    # skips the file if already HLS
+    # Skip if already HLS
     if video_path.lower().endswith(".m3u8"):
         hls_folder = os.path.dirname(video_path)
         master_playlist = video_path
@@ -90,10 +87,10 @@ def convert_video_to_hls(video_path, output_dir, content_id, verbose=True):
     master_playlist = os.path.join(hls_folder, "master.m3u8")
     segment_pattern = os.path.join(hls_folder, "file_%03d.ts")
 
-    # FFmpeg command (verbose)
+    # FFmpeg command
     cmd = [
         "ffmpeg",
-        "-y",  # overwrite if exists
+        "-y",
         "-i", video_path,
         "-c:v", "h264",
         "-c:a", "aac",
@@ -101,9 +98,15 @@ def convert_video_to_hls(video_path, output_dir, content_id, verbose=True):
         "-f", "hls",
         "-hls_time", "6",
         "-hls_playlist_type", "vod",
-        "-hls_segment_filename", segment_pattern,
-        master_playlist
+        "-hls_segment_filename", segment_pattern
     ]
+
+    # Add encryption if requested
+    if encrypt and key_info_file:
+        cmd.extend(["-hls_key_info_file", key_info_file])
+
+    # Append master playlist at the end
+    cmd.append(master_playlist)
 
     if verbose:
         print(f"[DEBUG] Running ffmpeg command: {' '.join(cmd)}")
